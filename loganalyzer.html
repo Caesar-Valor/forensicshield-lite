@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/jpeg" href="img/forensicShield.jpeg.jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ForensicShield Lite — Log Analyzer: análisis de amenazas en URLs y archivos.">
+  <meta name="author" content="Cesar Eduardo Valenzuela Mosquera">
+  <title>ForensicShield Lite | Log Analyzer</title>
+
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+                 style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+                 font-src 'self' https://fonts.gstatic.com;
+                 img-src 'self' data:;
+                 connect-src 'self' http://127.0.0.1:8000 http://localhost:8000;
+                 object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/scanner.css">
+  <link rel="stylesheet" href="css/loganalyzer.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js" defer></script>
+</head>
+
+<body>
+  <canvas id="canvas-bg" aria-hidden="true"></canvas>
+
+  <div class="app-container">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" aria-label="Panel lateral de navegación">
+      <div class="brand" role="banner">
+        <div class="brand-icon" aria-hidden="true"></div>
+        <span>ForensicShield<em> Lite</em></span>
+      </div>
+
+      <nav class="nav-menu" aria-label="Menú principal">
+        <ul role="list">
+          <li>
+            <a href="index.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Overview
+            </a>
+          </li>
+          <li>
+            <a href="scanner.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              Port Scanner
+            </a>
+          </li>
+          <li>
+            <a href="loganalyzer.html" class="nav-link active" aria-current="page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Log Analyzer
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="user-profile" aria-label="Perfil del usuario">
+        <div class="avatar" id="userAvatar" aria-hidden="true">CV</div>
+        <div class="user-info">
+          <strong id="userName">Cargando...</strong>
+          <small id="userRol">—</small>
+        </div>
+        <button class="theme-btn" id="themeToggle" aria-label="Cambiar tema" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="main-content" id="main" tabindex="-1">
+
+      <!-- Header -->
+      <header class="scanner-header" aria-labelledby="log-title">
+        <span class="scanner-tag">Módulo 2 · Log Analyzer</span>
+        <h1 class="scanner-title" id="log-title">Análisis de<br>Amenazas Web.</h1>
+        <p class="scanner-desc">
+          Detecta URLs maliciosas, phishing y archivos peligrosos usando VirusTotal
+          y análisis heurístico propio. Evidencia forense admisible con timestamp y hash.
+        </p>
+      </header>
+
+      <!-- ===== CONFIGURACIÓN API ===== -->
+      <section class="la-config-section" id="configSection" aria-labelledby="config-title">
+        <div class="la-config-header">
+          <div>
+            <h2 class="la-section-title" id="config-title">Configuración VirusTotal</h2>
+            <p class="la-section-desc">Necesitas una API Key gratuita de <strong>virustotal.com</strong> para el análisis completo.</p>
+          </div>
+          <button class="la-btn-config-toggle" id="btnConfigToggle" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+            </svg>
+            Configurar API Key
+          </button>
+        </div>
+
+        <div class="la-config-body" id="configBody" hidden>
+          <div class="field-group">
+            <label for="vtApiKey" class="field-label">VirusTotal API Key</label>
+            <div class="field-input-wrapper">
+              <span class="field-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="vtApiKey" class="field-input"
+                placeholder="Pega aquí tu API Key de VirusTotal..."
+                autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+          <div class="la-config-actions">
+            <button class="la-btn-guardar-key" id="btnGuardarKey" type="button">Guardar Key</button>
+            <button class="la-btn-limpiar-key" id="btnLimpiarKey" type="button">Limpiar</button>
+            <a href="https://virustotal.com" target="_blank" rel="noopener noreferrer" class="la-link-vt">
+              Obtener Key gratis →
+            </a>
+          </div>
+          <div class="la-api-status" id="apiStatus" hidden></div>
+        </div>
+      </section>
+
+      <!-- ===== TABS: URL / ARCHIVO ===== -->
+      <section class="la-tabs-section" aria-label="Seleccionar tipo de análisis">
+        <div class="la-tabs">
+          <button class="la-tab active" data-tab="url" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            Analizar URL
+          </button>
+          <button class="la-tab" data-tab="file" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Analizar Archivo
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== PANEL URL ===== -->
+      <section class="la-panel" id="panelUrl" aria-labelledby="url-panel-title">
+        <h2 class="la-section-title" id="url-panel-title">Análisis de URL / Enlace</h2>
+        <p class="la-section-desc">Pega cualquier URL sospechosa. Se analizará con heurísticas locales y VirusTotal.</p>
+
+        <div class="la-input-row">
+          <div class="field-group" style="flex:1">
+            <label for="urlInput" class="field-label">URL a analizar</label>
+            <div class="field-input-wrapper">
+              <span class="field-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+              </span>
+              <input type="url" id="urlInput" class="field-input"
+                placeholder="https://ejemplo.com/pagina-sospechosa"
+                autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+          <button class="la-btn-analizar" id="btnAnalizarUrl" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span id="btnUrlText">Analizar URL</span>
+          </button>
+        </div>
+
+        <div class="la-alert" id="urlAlert" role="alert" aria-live="polite" hidden></div>
+      </section>
+
+      <!-- ===== PANEL ARCHIVO ===== -->
+      <section class="la-panel" id="panelFile" hidden aria-labelledby="file-panel-title">
+        <h2 class="la-section-title" id="file-panel-title">Análisis de Archivo</h2>
+        <p class="la-section-desc">Sube un archivo para calcular su hash SHA-256 y verificarlo contra VirusTotal. Máximo 32 MB.</p>
+
+        <div class="la-dropzone" id="dropzone" role="button" tabindex="0" aria-label="Zona de carga de archivo">
+          <input type="file" id="fileInput" class="la-file-input" aria-label="Seleccionar archivo">
+          <div class="la-dropzone-content" id="dropzoneContent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p class="la-dropzone-title">Arrastra un archivo aquí</p>
+            <p class="la-dropzone-sub">o haz clic para seleccionar · EXE, PDF, DOCX, ZIP, y más</p>
+          </div>
+          <div class="la-dropzone-file" id="dropzoneFile" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <div class="la-dropzone-file-info">
+              <span class="la-dropzone-filename" id="dropzoneFilename">archivo.exe</span>
+              <span class="la-dropzone-filesize" id="dropzoneFilesize">0 KB</span>
+            </div>
+            <button class="la-btn-clear-file" id="btnClearFile" type="button" aria-label="Eliminar archivo">✕</button>
+          </div>
+        </div>
+
+        <div class="la-file-actions">
+          <button class="la-btn-analizar" id="btnAnalizarFile" type="button" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <span id="btnFileText">Analizar Archivo</span>
+          </button>
+        </div>
+
+        <div class="la-alert" id="fileAlert" role="alert" aria-live="polite" hidden></div>
+      </section>
+
+      <!-- ===== RESULTADO DEL ANÁLISIS ===== -->
+      <section class="la-resultado-section" id="resultadoSection" hidden aria-labelledby="resultado-title">
+
+        <!-- Veredicto principal -->
+        <div class="la-veredicto" id="veredictoCard">
+          <div class="la-veredicto-icono" id="veredictoIcono">🔍</div>
+          <div class="la-veredicto-info">
+            <span class="la-veredicto-label" id="veredictoLabel">Analizando...</span>
+            <span class="la-veredicto-target" id="veredictoTarget"></span>
+          </div>
+          <div class="la-veredicto-badge" id="verdictoBadge">—</div>
+        </div>
+
+        <!-- Métricas rápidas -->
+        <div class="la-metricas" id="metricasRow">
+          <div class="la-metrica-card" id="mDetecciones">
+            <span class="la-metrica-num" id="mDeteccionesNum">—</span>
+            <span class="la-metrica-label">Detecciones</span>
+            <span class="la-metrica-sub" id="mDeteccionesSub">de — motores</span>
+          </div>
+          <div class="la-metrica-card" id="mCategoria">
+            <span class="la-metrica-num" id="mCategoriaNum">—</span>
+            <span class="la-metrica-label">Categoría</span>
+            <span class="la-metrica-sub">Clasificación VirusTotal</span>
+          </div>
+          <div class="la-metrica-card" id="mHash">
+            <span class="la-metrica-num la-hash-text" id="mHashNum">—</span>
+            <span class="la-metrica-label">SHA-256</span>
+            <span class="la-metrica-sub">Huella digital forense</span>
+          </div>
+          <div class="la-metrica-card" id="mHeuristica">
+            <span class="la-metrica-num" id="mHeuristicaNum">—</span>
+            <span class="la-metrica-label">Heurística</span>
+            <span class="la-metrica-sub">Análisis local</span>
+          </div>
+        </div>
+
+        <!-- Detalle heurístico -->
+        <div class="la-detalle-section" id="detalleHeuristica" hidden>
+          <h3 class="la-detalle-titulo">Análisis Heurístico Local</h3>
+          <div class="la-indicadores" id="indicadoresList"></div>
+        </div>
+
+        <!-- Detalle VirusTotal -->
+        <div class="la-detalle-section" id="detalleVT" hidden>
+          <h3 class="la-detalle-titulo">Resultado VirusTotal</h3>
+          <div class="la-vt-motores" id="vtMotoresList"></div>
+        </div>
+
+        <!-- Registro forense -->
+        <div class="la-forense" id="forenseCard">
+          <div class="la-forense-header">
+            <span class="la-forense-icono">🛡️</span>
+            <span class="la-forense-titulo">Registro Forense</span>
+          </div>
+          <div class="la-forense-grid" id="forenseGrid"></div>
+          <button class="la-btn-exportar" id="btnExportar" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Exportar Informe JSON
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ===== HISTORIAL ===== -->
+      <section class="la-historial-section" id="historialSection" aria-labelledby="historial-title">
+        <div class="la-historial-header">
+          <h2 class="la-section-title" id="historial-title">Historial de Análisis</h2>
+          <button class="la-btn-limpiar-historial" id="btnLimpiarHistorial" type="button">Limpiar</button>
+        </div>
+        <div class="la-historial-empty" id="historialEmpty">
+          <p>No hay análisis realizados aún en esta sesión.</p>
+        </div>
+        <div class="la-historial-lista" id="historialLista" hidden></div>
+      </section>
+
+      <footer class="site-footer" aria-label="Pie de página">
+        <p>&copy; 2026 <strong>ForensicShield Lite</strong> · ITESPF · Cesar Eduardo Valenzuela Mosquera</p>
+        <small>Módulo Log Analyzer — Threat Intelligence</small>
+      </footer>
+
+    </main>
+  </div>
+
+  <script src="js/loganalyzer.js" defer></script>
+</body>
+</html>

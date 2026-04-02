@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/jpeg" href="img/forensicShield.jpeg.jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ForensicShield Lite: Plataforma modular de auditoría de seguridad informática y análisis forense digital para PyMEs dominicanas.">
+  <meta name="author" content="Cesar Eduardo Valenzuela Mosquera">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+                 style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+                 font-src 'self' https://fonts.gstatic.com;
+                 img-src 'self' https://images.unsplash.com data:;
+                 connect-src 'self' http://127.0.0.1:8000 http://localhost:8000;
+                 object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+
+  <title>ForensicShield Lite | Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js" defer></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <canvas id="canvas-bg" aria-hidden="true"></canvas>
+
+  <div class="app-container">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" aria-label="Panel lateral de navegación">
+      <div class="brand" role="banner">
+        <div class="brand-icon" aria-hidden="true"></div>
+        <span>ForensicShield<em> Lite</em></span>
+      </div>
+
+      <nav class="nav-menu" aria-label="Menú principal">
+        <ul role="list">
+
+          <li>
+            <a href="index.html" class="nav-link active" aria-current="page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Overview
+            </a>
+          </li>
+
+          <li>
+            <a href="scanner.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              Port Scanner
+            </a>
+          </li>
+
+          <!-- Log Analyzer — ACTIVO -->
+          <li>
+            <a href="loganalyzer.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Log Analyzer
+            </a>
+          </li>
+
+          <!-- Report Generator — próximamente -->
+          <li>
+            <a href="#" class="nav-link nav-disabled" title="Próximamente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Report Generator
+              <span class="nav-badge">Pronto</span>
+            </a>
+          </li>
+
+        </ul>
+      </nav>
+
+      <div class="user-profile" aria-label="Perfil del usuario">
+        <div class="avatar" id="userAvatar" aria-hidden="true">CV</div>
+        <div class="user-info">
+          <strong id="userName">Cargando...</strong>
+          <small id="userRol">—</small>
+        </div>
+        <button class="theme-btn" id="themeToggle" aria-label="Cambiar tema claro/oscuro" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="main-content" id="main" tabindex="-1">
+
+      <!-- ===== HERO / BIENVENIDA ===== -->
+      <header class="hero-section" id="overview" aria-labelledby="hero-title">
+        <p class="hero-tag">Proyecto Final · ITESPF 2026 · Código Abierto</p>
+        <h1 class="hero-title" id="hero-title">Seguridad Digital<br>para Todos.</h1>
+        <p class="hero-desc">
+          Plataforma modular de auditoría de seguridad informática y análisis forense digital
+          diseñada para PyMEs dominicanas.
+        </p>
+      </header>
+
+      <!-- ===== MÉTRICAS EN VIVO ===== -->
+      <section class="metrics-row" aria-label="Métricas del sistema">
+
+        <div class="metric-card" id="metricEscaneos">
+          <div class="metric-icon metric-icon-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Escaneos Totales</span>
+            <span class="metric-value" id="mEscaneos">—</span>
+          </div>
+        </div>
+
+        <div class="metric-card" id="metricCriticos">
+          <div class="metric-icon metric-icon-red" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Puertos Críticos</span>
+            <span class="metric-value" id="mCriticos">—</span>
+          </div>
+        </div>
+
+        <div class="metric-card" id="metricAbiertos">
+          <div class="metric-icon metric-icon-orange" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Puertos Abiertos</span>
+            <span class="metric-value" id="mAbiertos">—</span>
+          </div>
+        </div>
+
+        <div class="metric-card" id="metricUltimo">
+          <div class="metric-icon metric-icon-green" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Último Escaneo</span>
+            <span class="metric-value metric-value-sm" id="mUltimo">—</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ===== HISTORIAL + MÓDULOS ===== -->
+      <div class="dashboard-grid">
+
+        <!-- Historial de escaneos -->
+        <section class="dash-panel dash-historial" aria-labelledby="hist-title">
+          <div class="dash-panel-header">
+            <h2 class="dash-panel-title" id="hist-title">Actividad Reciente</h2>
+            <a href="scanner.html" class="dash-panel-link">Ver scanner →</a>
+          </div>
+
+          <div id="historialBody">
+            <div class="dash-empty" id="histEmpty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <p>No hay escaneos aún. <a href="scanner.html">Iniciar primer escaneo →</a></p>
+            </div>
+
+            <table class="dash-table" id="histTable" hidden>
+              <thead>
+                <tr>
+                  <th>IP Objetivo</th>
+                  <th>Estado</th>
+                  <th>Puertos Abiertos</th>
+                  <th>Riesgo</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="histTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Estado de módulos -->
+        <section class="dash-panel dash-modulos" aria-labelledby="mod-title">
+          <div class="dash-panel-header">
+            <h2 class="dash-panel-title" id="mod-title">Estado de Módulos</h2>
+          </div>
+
+          <div class="modulos-list">
+
+            <!-- Port Scanner — activo -->
+            <div class="modulo-item modulo-activo" role="link" tabindex="0"
+                 onclick="window.location.href='scanner.html'"
+                 onkeydown="if(event.key==='Enter')window.location.href='scanner.html'">
+              <div class="modulo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <div class="modulo-info">
+                <span class="modulo-nombre">Port Scanner</span>
+                <span class="modulo-desc">Detección de puertos y vulnerabilidades</span>
+              </div>
+              <span class="modulo-status status-activo">Activo</span>
+            </div>
+
+            <!-- Log Analyzer — ACTIVO (actualizado) -->
+            <div class="modulo-item modulo-activo" role="link" tabindex="0"
+                 onclick="window.location.href='loganalyzer.html'"
+                 onkeydown="if(event.key==='Enter')window.location.href='loganalyzer.html'">
+              <div class="modulo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <div class="modulo-info">
+                <span class="modulo-nombre">Log Analyzer</span>
+                <span class="modulo-desc">Threat Intelligence · URL & File Scanner</span>
+              </div>
+              <span class="modulo-status status-activo">Activo</span>
+            </div>
+
+            <!-- Report Generator — próximamente -->
+            <div class="modulo-item modulo-pronto">
+              <div class="modulo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </div>
+              <div class="modulo-info">
+                <span class="modulo-nombre">Report Generator</span>
+                <span class="modulo-desc">Evidencia forense admisible PDF/JSON</span>
+              </div>
+              <span class="modulo-status status-pronto">Próximamente</span>
+            </div>
+
+            <!-- Módulos futuros -->
+            <div class="modulo-item modulo-pronto">
+              <div class="modulo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+              </div>
+              <div class="modulo-info">
+                <span class="modulo-nombre">Módulos Futuros</span>
+                <span class="modulo-desc">Metadata · Web Recon · Traffic Analyzer</span>
+              </div>
+              <span class="modulo-status status-futuro">Planificado</span>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ===== GRID DE MÓDULOS (cards grandes) ===== -->
+      <section class="grid-container" id="modulos" aria-labelledby="modulos-title">
+        <h2 id="modulos-title" class="visually-hidden">Módulos del proyecto</h2>
+
+        <!-- Port Scanner — wide card, clickeable -->
+        <article class="bento-card wide"
+                 aria-labelledby="card-title-scanner"
+                 onclick="window.location.href='scanner.html'"
+                 onkeydown="if(event.key==='Enter')window.location.href='scanner.html'"
+                 role="link" tabindex="0">
+          <div class="card-image"
+               style="background-image: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2070&auto=format&fit=crop');"
+               role="img" aria-label="Port Scanner"></div>
+          <div class="card-content">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="card-title" id="card-title-scanner">Port Scanner</h3>
+              <p class="card-sub">Detección de puertos TCP/UDP, servicios activos, versiones de software</p>
+            </div>
+            <span class="card-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </div>
+        </article>
+
+        <!-- Log Analyzer — ACTIVO y clickeable -->
+        <article class="bento-card"
+                 aria-labelledby="card-title-log"
+                 onclick="window.location.href='loganalyzer.html'"
+                 onkeydown="if(event.key==='Enter')window.location.href='loganalyzer.html'"
+                 role="link" tabindex="0">
+          <div class="card-image"
+               style="background-image: url('https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=2574&auto=format&fit=crop');"
+               role="img" aria-label="Log Analyzer"></div>
+          <div class="card-content">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="card-title" id="card-title-log">Log Analyzer</h3>
+              <p class="card-sub">Análisis de URLs maliciosas, phishing y archivos peligrosos</p>
+            </div>
+            <span class="card-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </div>
+        </article>
+
+        <!-- Report Generator — próximamente, no clickeable -->
+        <article class="bento-card" aria-labelledby="card-title-report">
+          <div class="card-image"
+               style="background-image: url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop');"
+               role="img" aria-label="Report Generator"></div>
+          <div class="card-content">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="card-title" id="card-title-report">Report Generator</h3>
+              <p class="card-sub">Exportación a PDF/JSON/CSV con timestamping para evidencia forense admisible · Gráficas interactivas</p>
+            </div>
+            <span class="card-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </div>
+        </article>
+
+        <!-- Módulos futuros -->
+        <article class="bento-card" aria-labelledby="card-title-futuros">
+          <div class="card-image"
+               style="background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2670&auto=format&fit=crop');"
+               role="img" aria-label="Módulos Futuros"></div>
+          <div class="card-content">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="card-title" id="card-title-futuros">Módulos Futuros</h3>
+              <p class="card-sub">Metadata Extractor · Web Reconnaissance · Network Traffic Analyzer · Password Auditor</p>
+            </div>
+            <span class="card-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </div>
+        </article>
+
+      </section>
+      <br>
+
+      <!-- ===== SOBRE EL PROYECTO ===== -->
+      <section class="about-section" id="sobre" aria-labelledby="sobre-title">
+        <h2 class="about-title" id="sobre-title">Sobre el Proyecto</h2>
+        <p class="about-desc">
+          El proyecto consiste en el desarrollo de una aplicación web de código abierto que integra
+          herramientas de auditoría de seguridad y análisis forense digital. La plataforma está diseñada
+          específicamente para pequeñas y medianas empresas (PyMEs) dominicanas que carecen de recursos
+          económicos para adquirir soluciones comerciales de ciberseguridad, cuyo costo promedio oscila
+          entre <strong>$50,000 y $200,000 USD anuales</strong>. El sistema incluirá tres módulos principales:
+          <strong>Port Scanner</strong> para identificar vulnerabilidades en la infraestructura de red,
+          <strong>Log Analyzer</strong> para detectar amenazas web en tiempo real mediante análisis
+          , y <strong>Report Generator</strong> para consolidar hallazgos
+          en formatos certificables y admisibles como evidencia forense.
+        </p>
+      </section>
+
+      <!-- ===== CONTACTO ===== -->
+      <section class="contact-section" id="contacto" aria-labelledby="contacto-title">
+        <h2 id="contacto-title" class="visually-hidden">Contacto</h2>
+        <address>
+          <p>¿Tienes preguntas sobre el proyecto? Escríbeme directamente:</p>
+          <a href="mailto:cesarvalenzuela1997@gmail.com" class="contact-email">
+            cesarvalenzuela1997@gmail.com
+          </a>
+        </address>
+      </section>
+
+      <!-- ===== FOOTER ===== -->
+      <footer class="site-footer" aria-label="Pie de página">
+        <p>&copy; 2026 <strong>ForensicShield Lite</strong> · ITESPF · Cesar Eduardo Valenzuela Mosquera</p>
+        <small>Desarrollado para democratizar la ciberseguridad en República Dominicana</small>
+      </footer>
+
+    </main>
+  </div>
+
+  <script src="js/script.js" defer></script>
+</body>
+</html>

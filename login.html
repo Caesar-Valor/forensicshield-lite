@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/jpeg" href="img/forensicShield.jpeg.jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ForensicShield Lite — Iniciar sesión en la plataforma de auditoría de seguridad.">
+  <meta name="author" content="Cesar Eduardo Valenzuela Mosquera">
+  <title>ForensicShield Lite | Iniciar Sesión</title>
+
+  <!-- ===== SEGURIDAD ===== -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+                 style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+                 font-src 'self' https://fonts.gstatic.com;
+                 img-src 'self' data:;
+                 connect-src 'self' http://127.0.0.1:8000 http://localhost:8000;
+                 object-src 'none';
+                 base-uri 'self';
+                 form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy"        content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy"     content="camera=(), microphone=(), geolocation=(), payment=()">
+  <!-- ===== /SEGURIDAD ===== -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/login.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js" defer></script>
+</head>
+
+<body>
+
+  <!-- Fondo animado Three.js -->
+  <canvas id="canvas-bg" aria-hidden="true"></canvas>
+
+  <!-- ===== CONTENEDOR PRINCIPAL ===== -->
+  <div class="login-wrapper">
+
+    <!-- Columna izquierda — branding -->
+    <aside class="login-brand" aria-label="Información del sistema">
+
+      <div class="brand-logo">
+        <div class="brand-icon" aria-hidden="true"></div>
+        <span class="brand-name">ForensicShield<em> Lite</em></span>
+      </div>
+
+      <div class="brand-content">
+        <h1 class="brand-title">Plataforma de<br>Seguridad Digital.</h1>
+        <p class="brand-desc">
+          Auditoría de seguridad informática y análisis forense digital
+          para PyMEs dominicanas. Acceso protegido y cifrado.
+        </p>
+      </div>
+
+      <ul class="brand-features" aria-label="Características del sistema">
+        <li class="brand-feature">
+          <span class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <span>Port Scanner — Detección de vulnerabilidades</span>
+        </li>
+        <li class="brand-feature">
+          <span class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="20" x2="12" y2="10"/>
+              <line x1="18" y1="20" x2="18" y2="4"/>
+              <line x1="6"  y1="20" x2="6"  y2="16"/>
+            </svg>
+          </span>
+          <span>Log Analyzer — Análisis en tiempo real</span>
+        </li>
+        <li class="brand-feature">
+          <span class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </span>
+          <span>Report Generator — Evidencia forense admisible</span>
+        </li>
+      </ul>
+
+      <footer class="brand-footer">
+        <small>ITESPF · TSU en Programación Computacional · 2026</small>
+      </footer>
+
+    </aside>
+
+    <!-- Columna derecha — formulario -->
+    <main class="login-main" id="main" tabindex="-1">
+
+      <section class="login-card" aria-labelledby="login-title">
+
+        <header class="login-header">
+          <h2 class="login-title" id="login-title">Iniciar Sesión</h2>
+          <p class="login-subtitle">Ingresa tus credenciales para acceder al sistema</p>
+        </header>
+
+        <!-- Mensaje de error -->
+        <div class="login-alert" id="loginAlert" role="alert" aria-live="polite" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="loginAlertMsg">Credenciales incorrectas. Intenta de nuevo.</span>
+        </div>
+
+        <form class="login-form" id="loginForm" novalidate>
+
+          <!-- Campo: Email -->
+          <div class="form-group">
+            <label for="email" class="form-label">Correo electrónico</label>
+            <div class="form-input-wrapper">
+              <span class="form-input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </span>
+              <input type="email" id="email" name="email" class="form-input"
+                placeholder="tu@email.com" autocomplete="email"
+                required aria-required="true" aria-describedby="email-error">
+            </div>
+            <span class="form-error" id="email-error" role="alert" aria-live="polite"></span>
+          </div>
+
+          <!-- Campo: Contraseña -->
+          <div class="form-group">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="form-input-wrapper">
+              <span class="form-input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="password" name="password" class="form-input"
+                placeholder="••••••••" autocomplete="current-password"
+                required aria-required="true" aria-describedby="password-error" minlength="8">
+              <button type="button" class="form-toggle-pass" id="togglePassword"
+                aria-label="Mostrar contraseña" aria-pressed="false">
+                <svg class="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <span class="form-error" id="password-error" role="alert" aria-live="polite"></span>
+          </div>
+
+          <!-- Opciones adicionales -->
+          <div class="form-options">
+            <label class="form-remember">
+              <input type="checkbox" name="recordarme" id="recordarme" class="form-checkbox">
+              <span>Recordarme</span>
+            </label>
+            <a href="/recuperar-password" class="form-forgot">¿Olvidaste tu contraseña?</a>
+          </div>
+
+          <!-- Botón submit -->
+          <button type="submit" class="btn-login" id="btnLogin">
+            <span class="btn-text">Iniciar Sesión</span>
+            <span class="btn-loader" aria-hidden="true" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            </span>
+          </button>
+
+        </form>
+
+        <footer class="login-footer">
+          <p>¿No tienes cuenta? Contacta al <strong>administrador del sistema</strong>.</p>
+        </footer>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="js/login.js" defer></script>
+
+</body>
+</html>

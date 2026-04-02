@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/jpeg" href="img/forensicShield.jpeg.jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ForensicShield Lite — Port Scanner: detección de puertos, servicios y vulnerabilidades.">
+  <meta name="author" content="Cesar Eduardo Valenzuela Mosquera">
+  <title>ForensicShield Lite | Port Scanner</title>
+
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/scanner.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js" defer></script>
+</head>
+
+<body>
+
+  <canvas id="canvas-bg" aria-hidden="true"></canvas>
+
+  <div class="app-container">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" aria-label="Panel lateral de navegación">
+      <div class="brand" role="banner">
+        <div class="brand-icon" aria-hidden="true"></div>
+        <span>ForensicShield<em> Lite</em></span>
+      </div>
+
+      <nav class="nav-menu" aria-label="Menú principal">
+        <ul role="list">
+          <li>
+            <a href="index.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              Overview
+            </a>
+          </li>
+          <li>
+            <a href="scanner.html" class="nav-link active" aria-current="page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              Port Scanner
+            </a>
+          </li>
+          <li>
+            <a href="loganalyzer.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Log Analyzer
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="user-profile" aria-label="Perfil del usuario">
+        <div class="avatar" id="userAvatar" aria-hidden="true">CV</div>
+        <div class="user-info">
+          <strong id="userName">Cargando...</strong>
+          <small id="userRol">—</small>
+        </div>
+        <button class="theme-btn" id="themeToggle" aria-label="Cambiar tema claro/oscuro" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="main-content" id="main" tabindex="-1">
+
+      <!-- Header -->
+      <header class="scanner-header" aria-labelledby="scanner-title">
+        <span class="scanner-tag">Módulo 1 · Port Scanner</span>
+        <h1 class="scanner-title" id="scanner-title">Detección de<br>Vulnerabilidades.</h1>
+        <p class="scanner-desc">
+          Escanea puertos TCP, detecta servicios activos, versiones de software
+          y evalúa el nivel de riesgo de cada puerto expuesto.
+        </p>
+      </header>
+
+      <!-- ===== DISPOSITIVOS EN RED ===== -->
+      <section class="network-section" id="networkSection" aria-labelledby="network-title">
+        <div class="network-header">
+          <div class="network-header-left">
+            <span class="scanner-tag" style="margin-bottom:0">Red Local</span>
+            <h2 class="network-title" id="network-title">Dispositivos en tu Red</h2>
+            <p class="network-desc">Selecciona un dispositivo para escanear sus puertos o gestionar su acceso.</p>
+          </div>
+          <button class="btn-discover" id="btnDiscover" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M8.46 8.46a5 5 0 0 0 0 7.07"/>
+            </svg>
+            <span id="btnDiscoverText">Descubrir Red</span>
+          </button>
+        </div>
+
+        <div class="net-alert" id="netAlert" role="alert" aria-live="polite" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="netAlertMsg">Error</span>
+        </div>
+
+        <div class="net-table-wrapper" id="netTableWrapper">
+          <div class="net-empty" id="netEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
+            </svg>
+            <p>Presiona <strong>Descubrir Red</strong> para ver los dispositivos conectados.</p>
+          </div>
+          <table class="net-table" id="netTable" aria-label="Dispositivos en la red local" hidden>
+            <thead>
+              <tr>
+                <th scope="col">Estado</th>
+                <th scope="col">IP</th>
+                <th scope="col">Nombre / Dispositivo</th>
+                <th scope="col">MAC · Fabricante</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="netTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== PANELES LADO A LADO ===== -->
+      <div class="panels-row">
+
+        <!-- Panel de escaneo -->
+        <section class="control-panel" aria-labelledby="control-title">
+          <h2 id="control-title" class="visually-hidden">Panel de control del scanner</h2>
+          <div class="control-row">
+            <div class="field-group">
+              <label for="targetIp" class="field-label">IP Objetivo</label>
+              <div class="field-input-wrapper">
+                <span class="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </span>
+                <input type="text" id="targetIp" class="field-input"
+                  placeholder="ej: 192.168.1.1 o selecciona arriba"
+                  autocomplete="off" spellcheck="false"
+                  aria-label="Dirección IP a escanear" aria-describedby="ip-error">
+              </div>
+              <span class="field-error" id="ip-error" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="mode-selector">
+              <span class="field-label" id="modo-label">Modo de Escaneo</span>
+              <div class="mode-tabs" role="group" aria-labelledby="modo-label">
+                <button class="mode-tab active" data-mode="rapido"   type="button">⚡ Rápido</button>
+                <button class="mode-tab"        data-mode="completo" type="button">🔍 Completo</button>
+              </div>
+            </div>
+
+            <button class="btn-scan" id="btnScan" type="button">
+              <svg id="btnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <span id="btnText">Escanear</span>
+            </button>
+          </div>
+
+          <div class="scan-alert" id="scanAlert" role="alert" aria-live="polite" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="scanAlertMsg">Error</span>
+          </div>
+        </section>
+
+        <!-- ===== CONTROL DE ACCESO ===== -->
+        <section class="access-panel" aria-labelledby="access-title">
+
+          <div class="access-header">
+            <span class="scanner-tag" style="margin-bottom:0">Firewall</span>
+            <h2 class="access-title" id="access-title">Control de Acceso</h2>
+            <p class="network-desc">Bloquea o desbloquea IPs y dominios en el firewall de Windows.</p>
+          </div>
+
+          <!-- Tabs -->
+          <div class="access-tabs">
+            <button class="access-tab active" data-tab="ip"      type="button">🖥️ Por IP</button>
+            <button class="access-tab"        data-tab="dominio" type="button">🌐 Por Dominio</button>
+          </div>
+
+          <!-- Tab IP -->
+          <div class="access-tab-content" id="tabIp">
+            <div class="field-group">
+              <label for="firewallIp" class="field-label">Dirección IP</label>
+              <div class="field-input-wrapper">
+                <span class="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </span>
+                <input type="text" id="firewallIp" class="field-input"
+                  placeholder="ej: 192.168.0.5"
+                  autocomplete="off" spellcheck="false">
+              </div>
+            </div>
+            <div class="access-btn-row">
+              <button class="btn-bloquear-fw" id="btnBloquearIp" type="button">
+                🚫 Bloquear IP
+              </button>
+              <button class="btn-desbloquear-fw" id="btnDesbloquearIp" type="button">
+                ✅ Desbloquear IP
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab Dominio -->
+          <div class="access-tab-content" id="tabDominio" hidden>
+            <div class="field-group">
+              <label for="firewallDominio" class="field-label">Dominio</label>
+              <div class="field-input-wrapper">
+                <span class="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </span>
+                <input type="text" id="firewallDominio" class="field-input"
+                  placeholder="ej: youtube.com, facebook.com"
+                  autocomplete="off" spellcheck="false">
+              </div>
+            </div>
+            <div class="access-btn-row">
+              <button class="btn-bloquear-fw" id="btnBloquearDominio" type="button">
+                🚫 Bloquear Dominio
+              </button>
+              <button class="btn-desbloquear-fw" id="btnDesbloquearDominio" type="button">
+                ✅ Desbloquear Dominio
+              </button>
+            </div>
+          </div>
+
+          <!-- Resultado -->
+          <div class="access-result" id="accessResult" hidden>
+            <span id="accessResultMsg"></span>
+          </div>
+
+        </section>
+
+      </div>
+
+      <!-- ===== CONTADORES EN VIVO ===== -->
+      <div class="counters-row" id="countersRow" aria-label="Resumen del escaneo">
+        <div class="counter-card" id="cardEstado">
+          <span class="counter-label">Estado</span>
+          <span class="counter-value" id="cEstado">—</span>
+          <span class="counter-sub" id="cTarget">Ningún escaneo activo</span>
+        </div>
+        <div class="counter-card open" id="cardOpen">
+          <span class="counter-label">Puertos Abiertos</span>
+          <span class="counter-value" id="cOpen">0</span>
+          <span class="counter-sub">Requieren atención</span>
+        </div>
+        <div class="counter-card closed" id="cardClosed">
+          <span class="counter-label">Puertos Cerrados</span>
+          <span class="counter-value" id="cClosed">0</span>
+          <span class="counter-sub">Sin riesgo detectado</span>
+        </div>
+        <div class="counter-card duracion" id="cardDuracion">
+          <span class="counter-label">Duración</span>
+          <span class="counter-value" id="cDuracion">0s</span>
+          <span class="counter-sub" id="cModo">Modo: —</span>
+        </div>
+      </div>
+
+      <!-- ===== BARRA DE PROGRESO ===== -->
+      <section class="progress-section" id="progressSection" hidden aria-label="Progreso del escaneo">
+        <div class="progress-header">
+          <span class="progress-label" id="progressLabel">Escaneando puertos...</span>
+          <span class="progress-status" id="progressStatus">En progreso</span>
+        </div>
+        <div class="progress-bar-bg" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </section>
+
+      <!-- ===== TABLA DE RESULTADOS ===== -->
+      <section class="results-section" id="resultsSection" hidden aria-labelledby="results-title">
+        <div class="results-header">
+          <h2 class="results-title" id="results-title">Resultados del Escaneo</h2>
+          <span class="results-meta" id="resultsMeta">—</span>
+        </div>
+        <div class="results-filters" role="group" aria-label="Filtrar resultados por estado o riesgo">
+          <button class="filter-btn active" data-filter="todos"   type="button">Todos</button>
+          <button class="filter-btn"        data-filter="open"    type="button">Abiertos</button>
+          <button class="filter-btn"        data-filter="critico" type="button">Crítico</button>
+          <button class="filter-btn"        data-filter="alto"    type="button">Alto</button>
+          <button class="filter-btn"        data-filter="medio"   type="button">Medio</button>
+        </div>
+        <div class="results-table-wrapper">
+          <table class="results-table" aria-label="Tabla de puertos escaneados">
+            <thead>
+              <tr>
+                <th scope="col">Puerto</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Servicio</th>
+                <th scope="col">Versión</th>
+                <th scope="col">Riesgo</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8"/>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <p>Ingresa una IP y presiona Escanear para comenzar.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== MODAL NOMBRE ===== -->
+      <div class="modal-overlay" id="modalNombre" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-card">
+          <h3 class="modal-title" id="modal-title">Nombrar Dispositivo</h3>
+          <p class="modal-subtitle" id="modalIpLabel">IP: —</p>
+          <div class="modal-field">
+            <label for="modalNombreInput" class="field-label">Nombre personalizado</label>
+            <input type="text" id="modalNombreInput" class="field-input" placeholder="ej: PC Contabilidad, Router Principal..." maxlength="100">
+          </div>
+          <div class="modal-field">
+            <label for="modalNotasInput" class="field-label">Notas (opcional)</label>
+            <input type="text" id="modalNotasInput" class="field-input" placeholder="ej: Piso 2, Sala de servidores..." maxlength="255">
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn-cancel" id="modalCancelar" type="button">Cancelar</button>
+            <button class="modal-btn-save"   id="modalGuardar"  type="button">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FOOTER ===== -->
+      <footer class="site-footer" aria-label="Pie de página">
+        <p>&copy; 2026 <strong>ForensicShield Lite</strong> · ITESPF · Cesar Eduardo Valenzuela Mosquera</p>
+        <small>Módulo Port Scanner — Auditoría de Seguridad</small>
+      </footer>
+
+    </main>
+  </div>
+
+  <script src="js/scanner.js" defer></script>
+</body>
+</html>

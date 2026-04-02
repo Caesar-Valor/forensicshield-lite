@@ -1,0 +1,522 @@
+/* =============================================
+   ForensicShield Lite — login.css
+   Mismo sistema de diseño que style.css
+   ============================================= */
+
+/* ===== VARIABLES (idénticas a style.css) ===== */
+:root {
+  --accent:      #6d5dfc;
+  --accent-glow: #6d5dfc40;
+  --bg-color:    #050505;
+  --text-main:   #ffffff;
+  --text-muted:  #8b9bb4;
+  --panel-bg:    rgba(20, 20, 25, 0.4);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --panel-hover: rgba(255, 255, 255, 0.12);
+  --glass-blur:  20px;
+  --radius-lg:   24px;
+  --radius-md:   16px;
+  --gap:         24px;
+  --font-main:   'Tajawal', sans-serif;
+}
+
+[data-theme="light"] {
+  --bg-color:    #e8e8e8;
+  --text-main:   #1a1a1a;
+  --text-muted:  #5a5a5a;
+  --panel-bg:    rgba(255, 255, 255, 0.4);
+  --panel-border: rgba(0, 0, 0, 0.05);
+  --panel-hover: rgba(255, 255, 255, 0.6);
+  --accent:      #4f46e5;
+}
+
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; outline: none; }
+body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg-color);
+  color: var(--text-main);
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+/* ===== CANVAS FONDO ===== */
+#canvas-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== LAYOUT PRINCIPAL ===== */
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  padding: var(--gap);
+  gap: var(--gap);
+}
+
+/* ===== COLUMNA IZQUIERDA — BRAND ===== */
+.login-brand {
+  width: 420px;
+  flex-shrink: 0;
+  height: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Logo marca */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.brand-icon {
+  width: 50px; height: 50px;
+  background: url('../img/forensicShield.jpeg.jpeg') center/cover no-repeat;
+  border-radius: 6px; flex-shrink: 0;
+}
+
+.brand-name {
+  color: var(--text-main);
+}
+
+.brand-name em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* Título y descripción del brand */
+.brand-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.brand-title {
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 20px 0;
+  background: linear-gradient(to right, var(--text-main), var(--text-muted));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-desc {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0;
+  max-width: 340px;
+}
+
+/* Lista de características */
+.brand-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.brand-feature {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.feature-icon {
+  width: 36px; height: 36px;
+  background: var(--panel-hover);
+  border-radius: 10px;
+  display: grid; place-items: center;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: all 0.4s ease;
+}
+
+.brand-feature:hover .feature-icon {
+  background: var(--accent-glow);
+  transform: scale(1.1);
+}
+
+.feature-icon svg {
+  width: 18px; height: 18px;
+  stroke-width: 2;
+}
+
+/* Footer del brand */
+.brand-footer {
+  padding-top: 24px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.brand-footer small {
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* ===== COLUMNA DERECHA — FORMULARIO ===== */
+.login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Encabezado del formulario */
+.login-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 900;
+  margin: 0;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ===== ALERTA DE ERROR ===== */
+.login-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: #f87171;
+  font-size: 14px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease;
+}
+
+.login-alert svg {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  stroke: #f87171;
+}
+
+.login-alert[hidden] { display: none; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== FORMULARIO ===== */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Grupo de campo */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.2px;
+}
+
+/* Input con icono */
+.form-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--text-muted);
+  display: grid; place-items: center;
+  pointer-events: none;
+  transition: color 0.3s ease;
+}
+
+.form-input-icon svg {
+  width: 18px; height: 18px;
+  stroke-width: 2;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 48px;
+  background: var(--panel-hover);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: 15px;
+  font-weight: 400;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: rgba(109, 93, 252, 0.05);
+}
+
+.form-input:focus + .form-input-icon,
+.form-input-wrapper:focus-within .form-input-icon {
+  color: var(--accent);
+}
+
+/* Botón mostrar/ocultar contraseña */
+.form-toggle-pass {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  transition: all 0.3s ease;
+}
+
+.form-toggle-pass:hover {
+  color: var(--text-main);
+  background: var(--panel-hover);
+}
+
+.form-toggle-pass svg {
+  width: 18px; height: 18px;
+}
+
+/* Mensajes de error por campo */
+.form-error {
+  font-size: 13px;
+  color: #f87171;
+  font-weight: 500;
+  min-height: 18px;
+  padding-left: 4px;
+}
+
+/* Opciones adicionales */
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.form-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.form-checkbox {
+  width: 16px; height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.form-forgot {
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.3s ease;
+}
+
+.form-forgot:hover { opacity: 0.7; }
+
+/* ===== BOTÓN LOGIN ===== */
+.btn-login {
+  width: 100%;
+  padding: 15px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-main);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+}
+
+.btn-login:hover {
+  background: #5a4de0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loader giratorio dentro del botón */
+.btn-loader svg {
+  width: 20px; height: 20px;
+  animation: spin 0.8s linear infinite;
+}
+
+.btn-loader[hidden] { display: none; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ===== FOOTER DEL FORMULARIO ===== */
+.login-footer {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--panel-border);
+  padding-top: 20px;
+  margin-top: -8px;
+}
+
+.login-footer p { margin: 0; }
+
+.login-footer strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1100px) {
+  .login-brand { width: 360px; padding: 32px 28px; }
+  .login-card  { padding: 40px 32px; }
+}
+
+@media (max-width: 900px) {
+  .login-brand   { width: 320px; padding: 28px 24px; }
+  .brand-title   { font-size: 28px; }
+  .brand-content { padding: 28px 0; }
+}
+
+@media (max-width: 768px) {
+  body, html { overflow: auto; }
+
+  .login-wrapper {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .login-brand {
+    width: 100%;
+    height: auto;
+    padding: 24px 20px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .brand-content  { display: none; }
+  .brand-features { display: none; }
+  .brand-footer   { display: none; }
+
+  .login-main {
+    align-items: flex-start;
+  }
+
+  .login-card {
+    max-width: 100%;
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-wrapper { padding: 12px; gap: 12px; }
+  .login-brand   { padding: 16px 20px; }
+  .login-card    { padding: 28px 20px; gap: 20px; }
+  .login-title   { font-size: 24px; }
+  .btn-login     { padding: 14px 20px; font-size: 15px; }
+  .form-input    { padding: 13px 46px; font-size: 14px; }
+  .form-options  { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+
+@media (max-width: 400px) {
+  .login-title { font-size: 22px; }
+  .login-card  { padding: 24px 16px; }
+}
