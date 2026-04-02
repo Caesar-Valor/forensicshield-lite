@@ -12,12 +12,12 @@
 const API_URL = "http://127.0.0.1:8000";
 
 /* ===== VERIFICAR SESIÓN ===== */
-const token    = sessionStorage.getItem("fs_token");
+// El token JWT viaja en HttpOnly cookie — no accesible desde JS
 const nombre   = sessionStorage.getItem("fs_nombre");
 const apellido = sessionStorage.getItem("fs_apellido");
 const rol      = sessionStorage.getItem("fs_rol");
 
-if (!token) window.location.href = "login.html";
+if (!nombre) window.location.href = "login.html";
 
 if (nombre) {
   document.getElementById("userName").textContent   = `${nombre} ${apellido || ""}`.trim();
@@ -86,16 +86,15 @@ window.addEventListener("load", () => {
   gsap.from(".la-panel",       { y: 20,  opacity: 0, duration: 0.7, delay: 0.4, ease: "power3.out" });
 });
 
-/* ===== API KEY VIRUSTOTAL ===== */
-const VT_KEY_STORAGE = "fs_vt_api_key";
-let vtApiKey = sessionStorage.getItem(VT_KEY_STORAGE) || "";
+/* ===== API KEY VIRUSTOTAL =====
+   La key se guarda SOLO en memoria (variable JS), no en sessionStorage.
+   Así no es accesible desde otras pestañas ni persiste tras cerrar el tab.
+   El usuario debe reingresarla si recarga la página. */
+let vtApiKey = "";
 
 document.getElementById("btnConfigToggle").addEventListener("click", () => {
   const body = document.getElementById("configBody");
   body.hidden = !body.hidden;
-  if (!body.hidden && vtApiKey) {
-    document.getElementById("vtApiKey").value = vtApiKey;
-  }
 });
 
 document.getElementById("btnGuardarKey").addEventListener("click", () => {
@@ -105,13 +104,11 @@ document.getElementById("btnGuardarKey").addEventListener("click", () => {
     return;
   }
   vtApiKey = val;
-  sessionStorage.setItem(VT_KEY_STORAGE, val);
-  mostrarApiStatus("✅ API Key guardada en sesión. Lista para usar.", "ok");
+  mostrarApiStatus("API Key cargada en memoria. Se perderá al recargar la página.", "ok");
 });
 
 document.getElementById("btnLimpiarKey").addEventListener("click", () => {
   vtApiKey = "";
-  sessionStorage.removeItem(VT_KEY_STORAGE);
   document.getElementById("vtApiKey").value = "";
   mostrarApiStatus("API Key eliminada.", "info");
 });

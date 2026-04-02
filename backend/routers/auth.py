@@ -3,7 +3,8 @@
 # Endpoint: POST /api/auth/login
 # =============================================
 
-from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi import APIRouter, Depends, Request, HTTPException, status, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 from slowapi import Limiter
@@ -124,11 +125,39 @@ async def login(
 
     db.commit()
 
-    # ─── 8. Devolver token ────────────────────────────────────────────
-    return LoginResponse(
-        token    = token,
-        rol      = usuario.rol,
-        nombre   = usuario.nombre,
-        apellido = usuario.apellido,
-        mensaje  = f"Bienvenido, {usuario.nombre}!"
+    # ─── 8. Devolver datos del usuario con JWT en HttpOnly cookie ─────
+    token_expire_seconds = int(os.getenv("TOKEN_EXPIRE_MINUTES", "60")) * 60
+    response = JSONResponse(content={
+        "rol":      usuario.rol,
+        "nombre":   usuario.nombre,
+        "apellido": usuario.apellido,
+        "mensaje":  f"Bienvenido, {usuario.nombre}!"
+    })
+    response.set_cookie(
+        key      = "fs_token",
+        value    = token,
+        httponly = True,
+        samesite = "strict",
+        secure   = os.getenv("COOKIE_SECURE", "false").lower() == "true",
+        max_age  = token_expire_seconds,
+        path     = "/"
     )
+    return response
+
+
+@router.post("/logout", summary="Cerrar sesión")
+async def logout(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("fs_token")
+    if token:
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        sesion = db.query(SesionActiva).filter(
+            SesionActiva.jwt_token_hash == token_hash,
+            SesionActiva.activa         == True
+        ).first()
+        if sesion:
+            sesion.activa = False
+            db.commit()
+
+    response = JSONResponse(content={"mensaje": "Sesión cerrada correctamente."})
+    response.delete_cookie(key="fs_token", path="/")
+    return response

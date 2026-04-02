@@ -7,13 +7,25 @@
 const API_URL = "http://127.0.0.1:8000";
 
 /* ===== VERIFICAR SESIÓN ===== */
-const token    = sessionStorage.getItem("fs_token");
+// El token JWT viaja en HttpOnly cookie — no accesible desde JS
+// Verificamos sesión por datos de UI en sessionStorage; la cookie autentica las APIs
 const nombre   = sessionStorage.getItem("fs_nombre");
 const apellido = sessionStorage.getItem("fs_apellido");
 const rol      = sessionStorage.getItem("fs_rol");
 
-if (!token) {
+if (!nombre) {
   window.location.href = "login.html";
+}
+
+/* ===== UTILIDAD — ESCAPE HTML ===== */
+function escaparHTML(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g,  "&amp;")
+    .replace(/</g,  "&lt;")
+    .replace(/>/g,  "&gt;")
+    .replace(/"/g,  "&quot;")
+    .replace(/'/g,  "&#39;");
 }
 
 // Mostrar datos del usuario
@@ -147,7 +159,7 @@ sections.forEach(section => observer.observe(section));
 async function cargarDashboard() {
   try {
     const res  = await fetch(`${API_URL}/api/scanner/historial`, {
-      headers: { "Authorization": `Bearer ${token}` }
+      credentials: "include"
     });
 
     if (res.status === 401) {
@@ -232,13 +244,13 @@ function renderizarHistorial(escaneos) {
 
     return `
       <tr onclick="window.location.href='scanner.html'" title="Ir al scanner">
-        <td><span class="dash-ip">${e.target_ip}</span></td>
-        <td><span class="dash-estado ${estadoClass}">${estadoLabel}</span></td>
+        <td><span class="dash-ip">${escaparHTML(e.target_ip)}</span></td>
+        <td><span class="dash-estado ${estadoClass}">${escaparHTML(estadoLabel)}</span></td>
         <td style="font-variant-numeric:tabular-nums;font-weight:700">
-          ${e.puertos_abiertos ?? "—"}
+          ${e.puertos_abiertos != null ? Number(e.puertos_abiertos) : "—"}
         </td>
-        <td><span class="dash-riesgo ${riesgoClass}">${riesgoLabel}</span></td>
-        <td><span class="dash-fecha">${fecha}</span></td>
+        <td><span class="dash-riesgo ${riesgoClass}">${escaparHTML(riesgoLabel)}</span></td>
+        <td><span class="dash-fecha">${escaparHTML(fecha)}</span></td>
       </tr>
     `;
   }).join("");

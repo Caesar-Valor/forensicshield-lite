@@ -40,13 +40,12 @@ class ScanResponse(BaseModel):
 # Función auxiliar — obtener usuario del token
 # =============================================
 def obtener_usuario_id(request: Request) -> int:
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
+    token = request.cookies.get("fs_token")
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token requerido."
         )
-    token      = auth_header.split(" ")[1]
     token_data = verificar_token(token)
     if not token_data:
         raise HTTPException(

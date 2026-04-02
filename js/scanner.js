@@ -13,12 +13,12 @@
 const API_URL = "http://127.0.0.1:8000";
 
 /* ===== VERIFICAR SESION ===== */
-const token    = sessionStorage.getItem("fs_token");
+// El token JWT viaja en HttpOnly cookie — no accesible desde JS
 const nombre   = sessionStorage.getItem("fs_nombre");
 const apellido = sessionStorage.getItem("fs_apellido");
 const rol      = sessionStorage.getItem("fs_rol");
 
-if (!token) {
+if (!nombre) {
   window.location.href = "login.html";
 }
 
@@ -187,11 +187,9 @@ btnScan.addEventListener("click", async () => {
 
   try {
     const response = await fetch(`${API_URL}/api/scanner/iniciar`, {
-      method:  "POST",
-      headers: {
-        "Content-Type":  "application/json",
-        "Authorization": `Bearer ${token}`
-      },
+      method:      "POST",
+      headers:     { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         target_ip:     ip,
         target_nombre: ip,
@@ -200,7 +198,7 @@ btnScan.addEventListener("click", async () => {
     });
 
     if (response.status === 401) {
-      sessionStorage.clear();
+      sessionStorage.clear();  // limpiar datos de UI
       window.location.href = "login.html";
       return;
     }
@@ -228,7 +226,7 @@ function iniciarPolling(escaneoId) {
     try {
       const response = await fetch(
         `${API_URL}/api/scanner/resultado/${escaneoId}`,
-        { headers: { "Authorization": `Bearer ${token}` } }
+        { credentials: "include" }
       );
 
       if (!response.ok) return;
@@ -357,23 +355,23 @@ function renderizarTabla(puertos) {
   resultsTableBody.innerHTML = puertos.map(p => `
     <tr>
       <td>
-        <span class="puerto-num">${p.puerto}</span>
-        <span class="protocolo-badge">${p.protocolo || "TCP"}</span>
+        <span class="puerto-num">${Number(p.puerto)}</span>
+        <span class="protocolo-badge">${escHtml(p.protocolo || "TCP")}</span>
       </td>
       <td>
-        <span class="badge-estado badge-${p.estado}">
+        <span class="badge-estado badge-${escHtml(p.estado)}">
           ${p.estado === "open" ? "Abierto" : p.estado === "closed" ? "Cerrado" : "Filtrado"}
         </span>
       </td>
-      <td><span class="servicio-name">${p.servicio || "—"}</span></td>
+      <td><span class="servicio-name">${escHtml(p.servicio || "—")}</span></td>
       <td>
         ${p.version
-          ? `<span class="version-text">${p.version}</span>`
+          ? `<span class="version-text">${escHtml(p.version)}</span>`
           : `<span style="color:var(--text-muted);font-size:13px">—</span>`}
       </td>
       <td>
-        <span class="badge-riesgo riesgo-${p.riesgo || "ninguno"}">
-          ${capitalizar(p.riesgo || "ninguno")}
+        <span class="badge-riesgo riesgo-${escHtml(p.riesgo || "ninguno")}">
+          ${capitalizar(escHtml(p.riesgo || "ninguno"))}
         </span>
       </td>
     </tr>
@@ -447,11 +445,11 @@ btnDiscover.addEventListener("click", async () => {
 
   try {
     const res = await fetch(`${API_URL}/api/network/hosts`, {
-      headers: { "Authorization": `Bearer ${token}` }
+      credentials: "include"
     });
 
     if (res.status === 401) {
-      sessionStorage.clear();
+      sessionStorage.clear();  // limpiar datos de UI
       window.location.href = "login.html";
       return;
     }
@@ -594,8 +592,9 @@ modalGuardar.addEventListener("click", async () => {
 
   try {
     const res = await fetch(`${API_URL}/api/network/nombre`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      method:      "POST",
+      headers:     { "Content-Type": "application/json" },
+      credentials: "include",
       body:    JSON.stringify({
         ip:     modalIpActual,
         mac:    modalMacActual || null,
@@ -622,7 +621,7 @@ async function bloquearDispositivo(ip) {
   try {
     const res = await fetch(
       `${API_URL}/api/network/bloquear?ip=${encodeURIComponent(ip)}`,
-      { method: "POST", headers: { "Authorization": `Bearer ${token}` } }
+      { method: "POST", credentials: "include" }
     );
     const data = await res.json();
     if (res.ok) { alert(data.mensaje); }
@@ -705,8 +704,8 @@ async function ejecutarAcceso(url, confirmMsg) {
 
   try {
     const res  = await fetch(url, {
-      method:  "POST",
-      headers: { "Authorization": `Bearer ${token}` }
+      method:      "POST",
+      credentials: "include"
     });
     const data = await res.json();
 
@@ -745,7 +744,7 @@ function ocultarAccessResult() {
 async function cargarRecomendaciones(escaneoId) {
   try {
     const res  = await fetch(`${API_URL}/api/scanner/recomendaciones/${escaneoId}`, {
-      headers: { "Authorization": `Bearer ${token}` }
+      credentials: "include"
     });
     const data = await res.json();
     if (res.ok) renderizarRecomendaciones(data);

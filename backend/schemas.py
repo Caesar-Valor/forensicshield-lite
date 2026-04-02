@@ -47,8 +47,7 @@ class LoginRequest(BaseModel):
         return v
 
 class LoginResponse(BaseModel):
-    """Lo que la API devuelve si el login es exitoso"""
-    token:    str
+    """Lo que la API devuelve si el login es exitoso (token va en HttpOnly cookie)"""
     rol:      str
     nombre:   str
     apellido: str

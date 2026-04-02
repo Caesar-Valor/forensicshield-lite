@@ -217,9 +217,10 @@ loginForm.addEventListener("submit", async (e) => {
   try {
     // ── Llamada al backend FastAPI ───────────────────────────────────
     const response = await fetch(`${API_URL}/api/auth/login`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ email, password })
+      method:      "POST",
+      headers:     { "Content-Type": "application/json" },
+      credentials: "include",
+      body:        JSON.stringify({ email, password })
     });
 
     // ── Error 429 — demasiados intentos (slowapi / bloqueo por IP) ──
@@ -231,12 +232,12 @@ loginForm.addEventListener("submit", async (e) => {
 
     const data = await response.json();
 
-    if (response.ok && data.token) {
+    if (response.ok && data.nombre) {
       // ── Login exitoso ─────────────────────────────────────────────
+      // El JWT viaja en HttpOnly cookie (no accesible desde JS)
+      // Solo guardamos datos no sensibles para la UI
       intentosFallidos = 0;
 
-      // Guardar token y datos del usuario en sessionStorage
-      sessionStorage.setItem("fs_token",    data.token);
       sessionStorage.setItem("fs_rol",      data.rol);
       sessionStorage.setItem("fs_nombre",   data.nombre);
       sessionStorage.setItem("fs_apellido", data.apellido);
