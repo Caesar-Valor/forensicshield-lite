@@ -1007,7 +1007,7 @@ async function aplicarCorreccion(puerto, protocolo, btn) {
     try {
       const res  = await fetch(
         `${API_URL}/api/scanner/abrir-puerto?puerto=${puerto}&protocolo=${protocolo}`,
-        { method: "POST", headers: { "Authorization": `Bearer ${token}` } }
+        { method: "POST", credentials: "include" }
       );
       const data = await res.json();
 
@@ -1054,7 +1054,7 @@ async function aplicarCorreccion(puerto, protocolo, btn) {
   try {
     const res  = await fetch(
       `${API_URL}/api/scanner/cerrar-puerto?puerto=${puerto}&protocolo=${protocolo}`,
-      { method: "POST", headers: { "Authorization": `Bearer ${token}` } }
+      { method: "POST", credentials: "include" }
     );
     const data = await res.json();
 
@@ -1155,8 +1155,9 @@ function iniciarVerificacion(puerto, protocolo) {
       }
 
       const resInicio = await fetch(`${API_URL}/api/scanner/iniciar`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        method:      "POST",
+        headers:     { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           target_ip:      ipActual,
           target_nombre:  ipActual,
@@ -1187,7 +1188,7 @@ function iniciarVerificacion(puerto, protocolo) {
 
         const resResult = await fetch(
           `${API_URL}/api/scanner/resultado/${idVerif}`,
-          { headers: { "Authorization": `Bearer ${token}` } }
+          { credentials: "include" }
         );
         const dataResult = await resResult.json();
 

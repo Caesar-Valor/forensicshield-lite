@@ -3,7 +3,7 @@
 # Endpoint: POST /api/auth/login
 # =============================================
 
-from fastapi import APIRouter, Depends, Request, HTTPException, status, Response
+from fastapi import APIRouter, Depends, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
@@ -14,7 +14,7 @@ import os
 
 from database import get_db
 from models   import Usuario, IntentoLogin, SesionActiva
-from schemas  import LoginRequest, LoginResponse
+from schemas  import LoginRequest
 from auth     import verificar_password, crear_token
 
 limiter = Limiter(key_func=get_remote_address)
@@ -29,8 +29,7 @@ VENTANA_MINUTOS = int(os.getenv("VENTANA_BLOQUEO_MINUTOS", "15"))
 
 @router.post(
     "/login",
-    response_model = LoginResponse,
-    summary        = "Iniciar sesión en ForensicShield Lite"
+    summary = "Iniciar sesión en ForensicShield Lite"
 )
 @limiter.limit("10/minute")
 async def login(
