@@ -34,3 +34,6 @@ desktop.ini
 *.nmap
 *.gnmap
 *.xml
+
+# PDFs generados (se regeneran desde la BD)
+backend/reports/

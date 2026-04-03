@@ -7,9 +7,10 @@ from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 import os
 
-from routers import auth    as auth_router
-from routers import scanner as scanner_router
-from routers import network as network_router   # ← AGREGAR AQUÍ
+from routers import auth     as auth_router
+from routers import scanner  as scanner_router
+from routers import network  as network_router
+from routers import reportes as reportes_router
 
 load_dotenv()
 
@@ -65,7 +66,8 @@ async def agregar_headers_seguridad(request: Request, call_next):
 # =============================================
 app.include_router(auth_router.router)
 app.include_router(scanner_router.router)
-app.include_router(network_router.router)   # ← AGREGAR AQUÍ
+app.include_router(network_router.router)
+app.include_router(reportes_router.router)
 
 # =============================================
 # Ruta raíz

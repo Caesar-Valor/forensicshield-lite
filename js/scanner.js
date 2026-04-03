@@ -1244,3 +1244,152 @@ function mostrarResultadoVerificacion(el, barra, estado, mensaje) {
     gsap.from(el, { y: -4, opacity: 0, duration: 0.4, ease: "power2.out" });
   }
 }
+
+/* =============================================
+   REPORTES PDF
+   ============================================= */
+
+const btnGenerarPdf       = document.getElementById("btnGenerarPdf");
+const btnPdfText          = document.getElementById("btnPdfText");
+const btnRefrescarReportes = document.getElementById("btnRefrescarReportes");
+const reportesSection     = document.getElementById("reportesSection");
+const reportesEmpty       = document.getElementById("reportesEmpty");
+const reportesTableWrap   = document.getElementById("reportesTableWrap");
+const reportesTableBody   = document.getElementById("reportesTableBody");
+
+const RIESGO_COLORS = {
+  critico: "#ef4444",
+  alto:    "#f97316",
+  medio:   "#eab308",
+  bajo:    "#22c55e",
+  ninguno: "#64748b",
+};
+
+/* ── Generar reporte del escaneo actual ─────────────────────────── */
+btnGenerarPdf.addEventListener("click", async () => {
+  if (!escaneoActual) return;
+
+  btnGenerarPdf.disabled = true;
+  btnPdfText.textContent = "Generando...";
+
+  try {
+    const res  = await fetch(`${API_URL}/api/reportes/generar/${escaneoActual}`, {
+      method:      "POST",
+      credentials: "include"
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.detail || "Error al generar el reporte.");
+      return;
+    }
+
+    mostrarNotificacion(`✅ Reporte ${data.numero_reporte} generado. Descargando...`);
+    await descargarReporte(data.reporte_id, data.numero_reporte);
+    await cargarReportes();
+
+  } catch (err) {
+    alert("Error de conexión al generar el reporte.");
+    console.error(err);
+  } finally {
+    btnGenerarPdf.disabled = false;
+    btnPdfText.textContent = "Generar Reporte PDF";
+  }
+});
+
+/* ── Descargar PDF por ID ────────────────────────────────────────── */
+async function descargarReporte(reporteId, numeroReporte) {
+  try {
+    const res = await fetch(`${API_URL}/api/reportes/descargar/${reporteId}`, {
+      credentials: "include"
+    });
+    if (!res.ok) { alert("No se pudo descargar el reporte."); return; }
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `${numeroReporte}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert("Error al descargar el PDF.");
+    console.error(err);
+  }
+}
+
+/* ── Cargar historial de reportes ───────────────────────────────── */
+async function cargarReportes() {
+  try {
+    const res  = await fetch(`${API_URL}/api/reportes/lista`, { credentials: "include" });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (!data.reportes || data.reportes.length === 0) {
+      reportesEmpty.hidden     = false;
+      reportesTableWrap.hidden = true;
+      return;
+    }
+
+    reportesEmpty.hidden     = true;
+    reportesTableWrap.hidden = false;
+
+    reportesTableBody.innerHTML = data.reportes.map(r => {
+      const riesgoColor = RIESGO_COLORS[r.riesgo_maximo] || RIESGO_COLORS.ninguno;
+      return `
+        <tr>
+          <td>
+            <span class="rep-numero">${escHtml(r.numero_reporte)}</span>
+          </td>
+          <td><span class="rep-ip">${escHtml(r.target_ip)}</span></td>
+          <td>
+            <span class="rep-riesgo" style="background:${riesgoColor}">
+              ${escHtml(r.riesgo_maximo)}
+            </span>
+          </td>
+          <td style="text-align:center;font-weight:700">${Number(r.hallazgos)}</td>
+          <td class="rep-fecha">${escHtml(r.generado_en)}</td>
+          <td>
+            <button
+              class="btn-descargar-rep"
+              onclick="descargarReporte(${r.reporte_id}, '${escHtml(r.numero_reporte)}')"
+              title="Descargar PDF">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Descargar
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    if (typeof gsap !== "undefined") {
+      gsap.from("#reportesSection", { y: 16, opacity: 0, duration: 0.5, ease: "power3.out" });
+    }
+  } catch (err) {
+    console.error("Error cargando reportes:", err);
+  }
+}
+
+/* ── Notificación temporal ──────────────────────────────────────── */
+function mostrarNotificacion(msg) {
+  let notif = document.getElementById("pdfNotif");
+  if (!notif) {
+    notif = document.createElement("div");
+    notif.id = "pdfNotif";
+    document.body.appendChild(notif);
+  }
+  notif.textContent = msg;
+  notif.className   = "pdf-notif visible";
+  setTimeout(() => { notif.className = "pdf-notif"; }, 4000);
+}
+
+btnRefrescarReportes.addEventListener("click", cargarReportes);
+
+/* Cargar reportes al iniciar */
+cargarReportes();
