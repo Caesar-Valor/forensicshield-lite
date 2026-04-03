@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/jpeg" href="img/forensicShield.jpeg.jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ForensicShield Lite — Report Generator: historial y descarga de reportes PDF de auditoría.">
+  <meta name="author" content="Cesar Eduardo Valenzuela Mosquera">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+
+  <title>ForensicShield Lite | Report Generator</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js" defer></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/reportes.css">
+</head>
+
+<body>
+  <canvas id="canvas-bg" aria-hidden="true"></canvas>
+
+  <div class="app-container">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" aria-label="Panel lateral de navegación">
+      <div class="brand" role="banner">
+        <div class="brand-icon" aria-hidden="true"></div>
+        <span>ForensicShield<em> Lite</em></span>
+      </div>
+
+      <nav class="nav-menu" aria-label="Menú principal">
+        <ul role="list">
+          <li>
+            <a href="index.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Overview
+            </a>
+          </li>
+          <li>
+            <a href="scanner.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              Port Scanner
+            </a>
+          </li>
+          <li>
+            <a href="loganalyzer.html" class="nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Log Analyzer
+            </a>
+          </li>
+          <li>
+            <a href="reportes.html" class="nav-link active" aria-current="page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+              Report Generator
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="user-profile" aria-label="Perfil del usuario">
+        <div class="avatar" id="userAvatar" aria-hidden="true">CV</div>
+        <div class="user-info">
+          <strong id="userName">Cargando...</strong>
+          <small id="userRol">—</small>
+        </div>
+        <button class="theme-btn" id="themeToggle" aria-label="Cambiar tema claro/oscuro" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="main-content" id="main" tabindex="-1">
+
+      <!-- Header -->
+      <header class="rep-header" aria-labelledby="rep-title">
+        <span class="rep-tag">Módulo 3 · Report Generator</span>
+        <h1 class="rep-title" id="rep-title">Reportes de<br>Auditoría.</h1>
+        <p class="rep-desc">
+          Genera, descarga y gestiona reportes PDF de auditoría de seguridad.
+          Cada reporte tiene un número único e irrepetible y queda registrado en el sistema.
+        </p>
+      </header>
+
+      <!-- ===== MÉTRICAS RÁPIDAS ===== -->
+      <section class="rep-metrics" aria-label="Métricas de reportes">
+        <div class="rep-metric-card">
+          <span class="rep-metric-label">Total Reportes</span>
+          <span class="rep-metric-value" id="mTotal">—</span>
+        </div>
+        <div class="rep-metric-card">
+          <span class="rep-metric-label">Último Generado</span>
+          <span class="rep-metric-value rep-metric-sm" id="mUltimo">—</span>
+        </div>
+        <div class="rep-metric-card">
+          <span class="rep-metric-label">Con Riesgo Crítico</span>
+          <span class="rep-metric-value rep-metric-danger" id="mCriticos">—</span>
+        </div>
+        <div class="rep-metric-card">
+          <span class="rep-metric-label">Hallazgos Totales</span>
+          <span class="rep-metric-value" id="mHallazgos">—</span>
+        </div>
+      </section>
+
+      <!-- ===== GENERAR NUEVO REPORTE ===== -->
+      <section class="rep-panel" aria-labelledby="gen-title">
+        <div class="rep-panel-header">
+          <div class="rep-panel-title-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <h2 class="rep-panel-title" id="gen-title">Generar Nuevo Reporte</h2>
+          </div>
+        </div>
+
+        <div class="rep-gen-body">
+          <p class="rep-gen-hint">
+            Selecciona un escaneo completado para generar su reporte PDF. El reporte incluirá
+            portada con logo, tabla de puertos, nivel de riesgo y recomendaciones de seguridad.
+          </p>
+
+          <div class="rep-gen-controls">
+            <div class="rep-select-wrap">
+              <label for="selectEscaneo" class="rep-select-label">Escaneo completado</label>
+              <select id="selectEscaneo" class="rep-select" aria-label="Seleccionar escaneo">
+                <option value="">— Cargando escaneos... —</option>
+              </select>
+            </div>
+            <button class="btn-gen-rep" id="btnGenerar" type="button" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+              <span id="btnGenerarText">Generar PDF</span>
+            </button>
+          </div>
+
+          <div id="genAlert" class="rep-alert" hidden role="alert" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- ===== HISTORIAL DE REPORTES ===== -->
+      <section class="rep-panel" aria-labelledby="hist-title">
+        <div class="rep-panel-header">
+          <div class="rep-panel-title-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <h2 class="rep-panel-title" id="hist-title">Historial de Reportes</h2>
+          </div>
+          <button class="btn-refresh-rep" id="btnRefresh" type="button" title="Actualizar lista">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Actualizar
+          </button>
+        </div>
+
+        <div id="histEmpty" class="rep-empty" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p>No hay reportes generados aún.<br>Selecciona un escaneo y genera tu primer reporte.</p>
+        </div>
+
+        <div class="rep-table-wrapper" id="histTableWrap" hidden>
+          <table class="rep-table" aria-label="Historial de reportes PDF">
+            <thead>
+              <tr>
+                <th scope="col">Nº Reporte</th>
+                <th scope="col">IP Objetivo</th>
+                <th scope="col">Riesgo Máximo</th>
+                <th scope="col">Hallazgos</th>
+                <th scope="col">Generado</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="histTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Notificación flotante -->
+  <div class="rep-notif" id="repNotif" role="status" aria-live="polite"></div>
+
+  <script src="js/reportes.js" defer></script>
+</body>
+</html>
