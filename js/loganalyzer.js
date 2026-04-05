@@ -33,57 +33,15 @@ toggleBtn.addEventListener("click", () => {
   const isLight = root.getAttribute("data-theme") === "light";
   isLight ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", "light");
   if (typeof gsap !== "undefined") gsap.fromTo("body", { opacity: 0.8 }, { opacity: 1, duration: 0.5 });
-  if (typeof window.uniforms !== "undefined")
-    window.uniforms.u_theme.value = root.getAttribute("data-theme") === "light" ? 1.0 : 0.0;
 });
 
-/* ===== FONDO THREE.JS ===== */
+/* ===== ANIMACIONES DE ENTRADA ===== */
 window.addEventListener("load", () => {
-  if (typeof THREE === "undefined" || typeof gsap === "undefined") return;
-  const canvas   = document.getElementById("canvas-bg");
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  const scene = new THREE.Scene();
-  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  window.uniforms = {
-    u_time:  { value: 0 },
-    u_res:   { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    u_theme: { value: 0.0 }
-  };
-  const material = new THREE.ShaderMaterial({
-    uniforms: window.uniforms,
-    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position,1.0); }`,
-    fragmentShader: `
-      uniform float u_time; uniform vec2 u_res; uniform float u_theme; varying vec2 vUv;
-      float r(vec2 s){return fract(sin(dot(s.xy,vec2(12.9898,78.233)))*43758.5453123);}
-      float n(vec2 s){vec2 i=floor(s),f=fract(s);float a=r(i),b=r(i+vec2(1,0)),c=r(i+vec2(0,1)),d=r(i+vec2(1,1));vec2 u=f*f*(3.-2.*f);return mix(a,b,u.x)+(c-a)*u.y*(1.-u.x)+(d-b)*u.x*u.y;}
-      float fbm(vec2 s){float v=0.,a=.5;mat2 m=mat2(cos(.5),sin(.5),-sin(.5),cos(.5));for(int i=0;i<5;i++){v+=a*n(s);s=m*s*2.+vec2(100.);a*=.5;}return v;}
-      void main(){vec2 st=gl_FragCoord.xy/u_res.xy;st.x*=u_res.x/u_res.y;
-        vec2 q=vec2(fbm(st+.0*u_time),fbm(st+vec2(1)));
-        vec2 rr=vec2(fbm(st+q+vec2(1.7,9.2)+.15*u_time),fbm(st+q+vec2(8.3,2.8)+.126*u_time));
-        vec3 c1=mix(vec3(.02,.02,.06),vec3(.95,.95,.98),u_theme);
-        vec3 c2=mix(vec3(.08,.04,.18),vec3(.90,.92,1.),u_theme);
-        vec3 ca=mix(vec3(.43,.36,.99),vec3(.40,.60,1.),u_theme);
-        vec3 color=mix(c1,c2,length(q)); color=mix(color,ca,length(rr)*.4);
-        gl_FragColor=vec4(color,1.);}
-    `
-  });
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
-  scene.add(plane);
-  function resize() {
-    const w = window.innerWidth, h = window.innerHeight;
-    renderer.setSize(w, h); window.uniforms.u_res.value.set(w, h);
-  }
-  window.addEventListener("resize", resize); resize();
-  (function animate(t) {
-    requestAnimationFrame(animate);
-    window.uniforms.u_time.value = t * 0.001;
-    renderer.render(scene, camera);
-  })(0);
-  gsap.from(".sidebar",        { x: -50, opacity: 0, duration: 1.2, ease: "power4.out" });
-  gsap.from(".scanner-header", { y: 30,  opacity: 0, duration: 1,   delay: 0.2, ease: "power3.out" });
-  gsap.from(".la-tabs-section",{ y: 20,  opacity: 0, duration: 0.7, delay: 0.3, ease: "power3.out" });
-  gsap.from(".la-panel",       { y: 20,  opacity: 0, duration: 0.7, delay: 0.4, ease: "power3.out" });
+  if (typeof gsap === "undefined") return;
+  gsap.from(".sidebar",         { x: -30, opacity: 0, duration: 0.6, ease: "power3.out" });
+  gsap.from(".scanner-header",  { y: 20,  opacity: 0, duration: 0.5, delay: 0.1, ease: "power3.out" });
+  gsap.from(".la-tabs-section", { y: 16,  opacity: 0, duration: 0.4, delay: 0.2, ease: "power2.out" });
+  gsap.from(".la-panel",        { y: 16,  opacity: 0, duration: 0.4, delay: 0.3, ease: "power2.out" });
 });
 
 /* ===== API KEY VIRUSTOTAL =====

@@ -74,12 +74,12 @@ const material = new THREE.ShaderMaterial({
       r.x = fbm(st + 1.0 * q + vec2(1.7,  9.2) + 0.150 * u_time);
       r.y = fbm(st + 1.0 * q + vec2(8.3,  2.8) + 0.126 * u_time);
 
-      vec3 dark1      = vec3(0.02, 0.02, 0.06);
-      vec3 dark2      = vec3(0.08, 0.04, 0.18);
-      vec3 darkAccent = vec3(0.43, 0.36, 0.99);
-      vec3 light1     = vec3(0.95, 0.95, 0.98);
-      vec3 light2     = vec3(0.90, 0.92, 1.00);
-      vec3 lightAccent= vec3(0.40, 0.60, 1.00);
+      vec3 dark1      = vec3(0.02, 0.05, 0.02);
+      vec3 dark2      = vec3(0.03, 0.08, 0.04);
+      vec3 darkAccent = vec3(0.05, 0.28, 0.10);
+      vec3 light1     = vec3(0.94, 0.98, 0.94);
+      vec3 light2     = vec3(0.88, 0.96, 0.89);
+      vec3 lightAccent= vec3(0.30, 0.75, 0.40);
 
       vec3 c1      = mix(dark1,      light1,      u_theme);
       vec3 c2      = mix(dark2,      light2,      u_theme);

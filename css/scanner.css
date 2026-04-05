@@ -3,42 +3,47 @@
    Cesar Eduardo Valenzuela Mosquera · ITESPF 2026
    ============================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
 /* ===== VARIABLES ===== */
 :root {
-  --accent:       #6d5dfc;
-  --accent-glow:  #6d5dfc40;
-  --accent-2:     #00d4aa;
-  --accent-2-glow:#00d4aa30;
-  --bg-color:     #050505;
-  --text-main:    #ffffff;
-  --text-muted:   #8b9bb4;
-  --panel-bg:     rgba(20, 20, 25, 0.4);
-  --panel-border: rgba(255, 255, 255, 0.08);
-  --panel-hover:  rgba(255, 255, 255, 0.12);
-  --glass-blur:   20px;
-  --radius-lg:    24px;
-  --radius-md:    16px;
-  --sidebar-w:    260px;
-  --gap:          24px;
-  --font-main:    'Tajawal', sans-serif;
+  --accent:        #22c55e;
+  --accent-glow:   rgba(34, 197, 94, 0.12);
+  --accent-border: rgba(34, 197, 94, 0.28);
+  --accent-2:      #4ade80;
+  --accent-2-glow: rgba(74, 222, 128, 0.10);
+  --bg-color:      #060d08;
+  --text-main:     #dff0e0;
+  --text-muted:    #527a58;
+  --panel-bg:      #0b130d;
+  --panel-border:  rgba(34, 197, 94, 0.08);
+  --panel-hover:   rgba(34, 197, 94, 0.06);
+  --glass-blur:    0px;
+  --radius-lg:     8px;
+  --radius-md:     5px;
+  --sidebar-w:     260px;
+  --gap:           24px;
+  --font-main:     'Inter', sans-serif;
+  --font-heading:  'Rajdhani', sans-serif;
+  --font-mono:     'JetBrains Mono', monospace;
 
-  /* Colores por nivel de riesgo */
   --riesgo-critico: #ef4444;
   --riesgo-alto:    #f97316;
   --riesgo-medio:   #eab308;
   --riesgo-bajo:    #22c55e;
-  --riesgo-info:    #3b82f6;
+  --riesgo-info:    #60a5fa;
   --riesgo-ninguno: #4b5563;
 }
 
 [data-theme="light"] {
-  --bg-color:     #e8e8e8;
-  --text-main:    #1a1a1a;
-  --text-muted:   #5a5a5a;
-  --panel-bg:     rgba(255, 255, 255, 0.4);
-  --panel-border: rgba(0, 0, 0, 0.05);
-  --panel-hover:  rgba(255, 255, 255, 0.6);
-  --accent:       #4f46e5;
+  --bg-color:      #f0f7f1;
+  --text-main:     #0f1f12;
+  --text-muted:    #4a6e50;
+  --panel-bg:      #ffffff;
+  --panel-border:  rgba(34, 197, 94, 0.12);
+  --panel-hover:   rgba(34, 197, 94, 0.05);
+  --accent:        #16a34a;
+  --accent-glow:   rgba(22, 163, 74, 0.12);
 }
 
 /* ===== RESET ===== */
@@ -47,9 +52,13 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
 
 body {
   font-family: var(--font-main);
-  background: var(--bg-color);
+  background-color: var(--bg-color);
+  background-image:
+    linear-gradient(rgba(34, 197, 94, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 197, 94, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
   color: var(--text-main);
-  transition: background 0.5s ease, color 0.5s ease;
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
 /* ===== UTILIDAD ===== */
@@ -81,8 +90,6 @@ body {
   flex-shrink: 0;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 32px 24px;
   display: flex;
@@ -98,7 +105,7 @@ body {
 .brand em { font-style: normal; color: var(--accent); }
 .brand-icon {
   width: 50px; height: 50px;
-  background: url('../img/forensicShield.jpeg.jpeg') center/cover no-repeat;
+  background: url('../img/forense.png') center/cover no-repeat;
   border-radius: 6px; flex-shrink: 0;
 }
 
@@ -166,8 +173,6 @@ body {
 .scanner-header {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 40px 40px 32px;
   display: flex; flex-direction: column; gap: 8px;
@@ -201,8 +206,6 @@ body {
 .control-panel {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 32px;
   display: flex; flex-direction: column; gap: 20px;
@@ -340,8 +343,6 @@ body {
 .counter-card {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 24px;
   display: flex; flex-direction: column; gap: 8px;
@@ -369,8 +370,6 @@ body {
 .progress-section {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 28px 32px;
   display: flex; flex-direction: column; gap: 12px;
@@ -402,8 +401,6 @@ body {
 .results-section {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 32px;
   display: flex; flex-direction: column; gap: 20px;
@@ -578,8 +575,6 @@ body {
 .network-section {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 32px;
   display: flex;
@@ -1019,8 +1014,6 @@ body {
 .access-panel {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 32px;
   display: flex;
@@ -1208,7 +1201,6 @@ body {
 .rec-section {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg);
   padding: 32px;
   display: flex;
@@ -1676,7 +1668,6 @@ body {
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-lg);
   padding: 24px 28px;
-  backdrop-filter: blur(var(--glass-blur));
   margin-top: 4px;
 }
 

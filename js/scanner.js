@@ -43,85 +43,15 @@ toggleBtn.addEventListener("click", () => {
   if (typeof gsap !== "undefined") {
     gsap.fromTo("body", { opacity: 0.8 }, { opacity: 1, duration: 0.5 });
   }
-  if (typeof window.uniforms !== "undefined") {
-    window.uniforms.u_theme.value = root.getAttribute("data-theme") === "light" ? 1.0 : 0.0;
-  }
 });
 
-/* ===== FONDO ANIMADO THREE.JS ===== */
+/* ===== ANIMACIONES DE ENTRADA ===== */
 window.addEventListener("load", () => {
-  if (typeof THREE === "undefined" || typeof gsap === "undefined") return;
-
-  const canvas   = document.getElementById("canvas-bg");
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  const scene  = new THREE.Scene();
-  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-  window.uniforms = {
-    u_time:  { value: 0 },
-    u_res:   { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    u_theme: { value: 0.0 }
-  };
-
-  const material = new THREE.ShaderMaterial({
-    uniforms: window.uniforms,
-    vertexShader: `
-      varying vec2 vUv;
-      void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
-    `,
-    fragmentShader: `
-      uniform float u_time; uniform vec2 u_res; uniform float u_theme;
-      varying vec2 vUv;
-      float random(in vec2 _st) { return fract(sin(dot(_st.xy,vec2(12.9898,78.233)))*43758.5453123); }
-      float noise(in vec2 _st) {
-        vec2 i=floor(_st); vec2 f=fract(_st);
-        float a=random(i),b=random(i+vec2(1.,0.)),c=random(i+vec2(0.,1.)),d=random(i+vec2(1.,1.));
-        vec2 u=f*f*(3.-2.*f);
-        return mix(a,b,u.x)+(c-a)*u.y*(1.-u.x)+(d-b)*u.x*u.y;
-      }
-      float fbm(in vec2 _st) {
-        float v=0.,a=0.5; vec2 shift=vec2(100.);
-        mat2 rot=mat2(cos(0.5),sin(0.5),-sin(0.5),cos(0.5));
-        for(int i=0;i<5;++i){v+=a*noise(_st);_st=rot*_st*2.+shift;a*=0.5;}
-        return v;
-      }
-      void main() {
-        vec2 st=gl_FragCoord.xy/u_res.xy; st.x*=u_res.x/u_res.y;
-        vec2 q=vec2(fbm(st+0.*u_time),fbm(st+vec2(1.)));
-        vec2 r=vec2(fbm(st+q+vec2(1.7,9.2)+.15*u_time),fbm(st+q+vec2(8.3,2.8)+.126*u_time));
-        vec3 c1=mix(vec3(.02,.02,.06),vec3(.95,.95,.98),u_theme);
-        vec3 c2=mix(vec3(.08,.04,.18),vec3(.90,.92,1.0),u_theme);
-        vec3 ca=mix(vec3(.43,.36,.99),vec3(.40,.60,1.0),u_theme);
-        vec3 color=mix(c1,c2,length(q));
-        color=mix(color,ca,length(r)*.4);
-        gl_FragColor=vec4(color,1.);
-      }
-    `
-  });
-
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
-  scene.add(plane);
-
-  function resize() {
-    const w = window.innerWidth, h = window.innerHeight;
-    renderer.setSize(w, h);
-    window.uniforms.u_res.value.set(w, h);
-  }
-  window.addEventListener("resize", resize);
-  resize();
-
-  (function animate(t) {
-    requestAnimationFrame(animate);
-    window.uniforms.u_time.value = t * 0.001;
-    renderer.render(scene, camera);
-  })(0);
-
-  gsap.from(".sidebar",        { x: -50, opacity: 0, duration: 1.2, ease: "power4.out" });
-  gsap.from(".scanner-header", { y: 30,  opacity: 0, duration: 1,   delay: 0.2, ease: "power3.out" });
-  gsap.from(".control-panel",  { y: 30,  opacity: 0, duration: 0.8, delay: 0.3, ease: "power3.out" });
-  gsap.from(".counter-card",   { y: 20,  opacity: 0, duration: 0.6, stagger: 0.1, delay: 0.4, ease: "back.out(1.2)" });
+  if (typeof gsap === "undefined") return;
+  gsap.from(".sidebar",        { x: -30, opacity: 0, duration: 0.6, ease: "power3.out" });
+  gsap.from(".scanner-header", { y: 20,  opacity: 0, duration: 0.5, delay: 0.1, ease: "power3.out" });
+  gsap.from(".control-panel",  { y: 20,  opacity: 0, duration: 0.5, delay: 0.2, ease: "power3.out" });
+  gsap.from(".counter-card",   { y: 16,  opacity: 0, duration: 0.4, stagger: 0.08, delay: 0.3, ease: "power2.out" });
 });
 
 /* ===== SELECTOR DE MODO ===== */
