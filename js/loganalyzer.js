@@ -829,3 +829,15 @@ async function sha256Archivo(file) {
   const hash = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
+
+/* ===== CERRAR SESIÓN ===== */
+document.getElementById("btnLogout").addEventListener("click", async () => {
+  try {
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include"
+    });
+  } catch (_) {}
+  sessionStorage.clear();
+  window.location.href = "login.html";
+});

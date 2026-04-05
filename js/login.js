@@ -250,7 +250,7 @@ loginForm.addEventListener("submit", async (e) => {
         ease: "power2.in",
         onComplete: () => {
           // ⚠️ Cambia "/index.html" por "/dashboard" cuando tengas el dashboard
-          window.location.href = "/index.html";
+          window.location.href = "index.html";
         }
       });
 

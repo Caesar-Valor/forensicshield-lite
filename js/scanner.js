@@ -1393,3 +1393,15 @@ btnRefrescarReportes.addEventListener("click", cargarReportes);
 
 /* Cargar reportes al iniciar */
 cargarReportes();
+
+/* ===== CERRAR SESIÓN ===== */
+document.getElementById("btnLogout").addEventListener("click", async () => {
+  try {
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include"
+    });
+  } catch (_) {}
+  sessionStorage.clear();
+  window.location.href = "login.html";
+});
