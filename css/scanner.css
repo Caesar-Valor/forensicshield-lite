@@ -447,7 +447,7 @@ body {
   transition: border-color .3s;
 }
 .counter-label { font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .8px; font-family: var(--font-mono); }
-.counter-value { font-size: 34px; font-weight: 800; color: var(--text-1); line-height: 1; font-family: var(--font-display); font-variant-numeric: tabular-nums; transition: color .4s; }
+.counter-value { font-size: 34px; font-weight: 800; color: var(--text-1); line-height: 1; font-family: var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -.5px; transition: color .4s; }
 .counter-sub { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 .counter-card.open .counter-value { color: #f87171; }
 .counter-card.closed .counter-value { color: var(--accent-bright); }
