@@ -83,6 +83,7 @@ body {
   border-radius: var(--radius-xl); padding: 22px 14px;
   display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; position: relative;
 }
+.sidebar .brand { overflow: visible; }
 .sidebar::before {
   content: ''; position: absolute; top: 0; left: 20px; right: 20px; height: 2px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
@@ -91,7 +92,8 @@ body {
 .brand {
   display: flex; align-items: center; gap: 12px;
   padding: 6px 6px 18px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 14px;
-  font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -.3px; color: var(--text-1); flex-shrink: 0;
+  font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -.3px;
+  color: var(--text-1); text-decoration: none; flex-shrink: 0;
 }
 .brand em { font-style: normal; color: var(--accent); }
 
@@ -115,17 +117,18 @@ body {
 .nav-link {
   display: flex; align-items: center; gap: 10px; padding: 10px 14px;
   border-radius: var(--radius-md); color: var(--text-3); text-decoration: none;
-  font-size: 14px; font-weight: 500; transition: all .25s var(--ease-out);
-  position: relative; overflow: hidden;
+  font-size: 14px; font-weight: 500; transition: all .22s var(--ease-out);
+  position: relative;
 }
 .nav-link::before {
   content: ''; position: absolute; left: 0; top: 22%; bottom: 22%;
   width: 0; background: var(--accent); border-radius: 0 2px 2px 0; transition: width .2s;
 }
 .nav-link svg { width: 17px; height: 17px; stroke-width: 1.8; flex-shrink: 0; }
-.nav-link:hover, .nav-link.active { background: var(--accent-dim); color: var(--accent); transform: translateX(3px); }
-.nav-link:hover::before, .nav-link.active::before { width: 2px; }
-.nav-link.active { font-weight: 600; }
+.nav-link:hover { background: var(--accent-dim); color: var(--accent); transform: translateX(3px); }
+.nav-link:hover::before { width: 2px; }
+.nav-link.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+.nav-link.active::before { width: 3px; }
 .nav-badge {
   margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
   background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border-normal); font-family: var(--font-mono);
@@ -135,8 +138,8 @@ body {
 .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #166534); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; font-family: var(--font-display); flex-shrink: 0; border: 1.5px solid var(--border-normal); }
 .user-info { flex: 1; overflow: hidden; }
 .user-info strong { display: block; font-size: 13px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.user-info small { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
-.theme-btn { background: none; border: none; cursor: pointer; color: var(--text-3); padding: 6px; border-radius: var(--radius-sm); transition: all .2s; display: flex; align-items: center; }
+.user-info small { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); text-transform: capitalize; }
+.theme-btn { background: none; border: none; cursor: pointer; color: var(--text-3); padding: 6px; border-radius: var(--radius-sm); transition: all .2s; display: flex; align-items: center; justify-content: center; }
 .theme-btn:hover { color: var(--accent); background: var(--accent-dim); }
 .theme-btn svg { width: 16px; height: 16px; }
 

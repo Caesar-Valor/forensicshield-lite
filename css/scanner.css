@@ -92,6 +92,7 @@ body {
   flex-shrink: 0; overflow: hidden;
   position: relative;
 }
+.sidebar .brand { overflow: visible; }
 .sidebar::before {
   content: '';
   position: absolute; top: 0; left: 20px; right: 20px; height: 2px;
@@ -106,7 +107,7 @@ body {
   margin-bottom: 14px;
   font-family: var(--font-display);
   font-size: 17px; font-weight: 700; letter-spacing: -.3px;
-  color: var(--text-1);
+  color: var(--text-1); text-decoration: none;
   flex-shrink: 0;
 }
 .brand em { font-style: normal; color: var(--accent); }
@@ -135,8 +136,8 @@ body {
   padding: 10px 14px; border-radius: var(--radius-md);
   color: var(--text-3); text-decoration: none;
   font-size: 14px; font-weight: 500;
-  transition: all .25s var(--ease-out);
-  position: relative; overflow: hidden;
+  transition: all .22s var(--ease-out);
+  position: relative;
 }
 .nav-link::before {
   content: ''; position: absolute; left: 0; top: 22%; bottom: 22%;
@@ -144,9 +145,10 @@ body {
   transition: width .2s;
 }
 .nav-link svg { width: 17px; height: 17px; stroke-width: 1.8; flex-shrink: 0; }
-.nav-link:hover, .nav-link.active { background: var(--accent-dim); color: var(--accent); transform: translateX(3px); }
-.nav-link:hover::before, .nav-link.active::before { width: 2px; }
-.nav-link.active { font-weight: 600; }
+.nav-link:hover { background: var(--accent-dim); color: var(--accent); transform: translateX(3px); }
+.nav-link:hover::before { width: 2px; }
+.nav-link.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+.nav-link.active::before { width: 3px; }
 
 /* User profile */
 .user-profile {
@@ -165,11 +167,11 @@ body {
 }
 .user-info { flex: 1; overflow: hidden; }
 .user-info strong { display: block; font-size: 13px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.user-info small  { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+.user-info small  { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); text-transform: capitalize; }
 .theme-btn {
   background: none; border: none; cursor: pointer;
   color: var(--text-3); padding: 6px; border-radius: var(--radius-sm);
-  transition: all .2s; display: flex; align-items: center;
+  transition: all .2s; display: flex; align-items: center; justify-content: center;
 }
 .theme-btn:hover { color: var(--accent); background: var(--accent-dim); }
 .theme-btn svg { width: 16px; height: 16px; }
