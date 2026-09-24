@@ -13,10 +13,10 @@ from typing import Optional
 from pydantic import BaseModel
 import os
 
-from database        import get_db
+from database        import get_db, SessionLocal
 from models          import Escaneo, ScanResultado
 from scanner         import ejecutar_escaneo
-from auth            import verificar_token
+from auth            import verificar_sesion
 from schemas         import ScanRequest
 from recomendaciones import generar_recomendaciones
 from network_scanner import cerrar_puerto_firewall, abrir_puerto_firewall
@@ -46,13 +46,25 @@ def obtener_usuario_id(request: Request) -> int:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token requerido."
         )
-    token_data = verificar_token(token)
+    token_data = verificar_sesion(token)
     if not token_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido o expirado."
         )
     return token_data.usuario_id
+
+
+# =============================================
+# Validación de parámetros de firewall
+# =============================================
+def validar_puerto_protocolo(puerto: int, protocolo: str) -> str:
+    if not 1 <= puerto <= 65535:
+        raise HTTPException(status_code=400, detail="Puerto fuera de rango (1-65535).")
+    protocolo = (protocolo or "").upper()
+    if protocolo not in ("TCP", "UDP"):
+        raise HTTPException(status_code=400, detail="Protocolo inválido. Usa TCP o UDP.")
+    return protocolo
 
 
 # =============================================
@@ -63,8 +75,11 @@ def procesar_escaneo(
     target_ip:      str,
     modo:           str,
     puertos_custom: Optional[str],
-    db:             Session
 ):
+    # IMPORTANTE: crear una sesión nueva aquí.
+    # La sesión del request ya fue cerrada por FastAPI antes de que
+    # el background task empiece a ejecutarse.
+    db = SessionLocal()
     try:
         escaneo = db.query(Escaneo).filter(Escaneo.id == escaneo_id).first()
         if not escaneo:
@@ -77,7 +92,7 @@ def procesar_escaneo(
 
         if not resultado.get("exitoso"):
             escaneo.estado = "fallido"
-            escaneo.notas  = resultado.get("error", "Error desconocido")
+            escaneo.notas  = f"{escaneo.notas or ''} | Error: {resultado.get('error', 'Error desconocido')}"[:1000]
             db.commit()
             return
 
@@ -112,13 +127,20 @@ def procesar_escaneo(
 
     except Exception as e:
         try:
+            # rollback obligatorio: si el error vino de un db.commit() fallido
+            # (ej: ENUM violation), la sesión queda en estado inválido.
+            # Sin rollback, cualquier query posterior falla con
+            # "Can't reconnect until invalid transaction is rolled back".
+            db.rollback()
             escaneo = db.query(Escaneo).filter(Escaneo.id == escaneo_id).first()
             if escaneo:
                 escaneo.estado = "fallido"
-                escaneo.notas  = str(e)
+                escaneo.notas  = str(e)[:500]
                 db.commit()
         except Exception:
             pass
+    finally:
+        db.close()
 
 
 # =============================================
@@ -148,7 +170,7 @@ async def iniciar_escaneo(
         target_ip     = datos.target_ip,
         target_nombre = datos.target_nombre,
         estado        = "pendiente",
-        notas         = f"Modo: {datos.modo}"
+        notas         = f"Modo: {'personalizado' if datos.puertos_custom else datos.modo}"
     )
     db.add(nuevo_escaneo)
     db.commit()
@@ -160,7 +182,6 @@ async def iniciar_escaneo(
         target_ip      = datos.target_ip,
         modo           = datos.modo,
         puertos_custom = datos.puertos_custom,
-        db             = db
     )
 
     return ScanResponse(
@@ -328,13 +349,13 @@ async def obtener_recomendaciones(
     "/cerrar-puerto",
     summary="Cerrar un puerto via firewall de Windows"
 )
-async def cerrar_puerto(
+def cerrar_puerto(
+    request:   Request,
     puerto:    int,
-    protocolo: str     = "TCP",
-    request:   Request = None,
-    db:        Session = Depends(get_db)
+    protocolo: str = "TCP",
 ):
-    usuario_id = obtener_usuario_id(request)
+    obtener_usuario_id(request)
+    protocolo = validar_puerto_protocolo(puerto, protocolo)
 
     resultado = cerrar_puerto_firewall(puerto, protocolo)
 
@@ -354,13 +375,13 @@ async def cerrar_puerto(
     "/abrir-puerto",
     summary="Eliminar regla de bloqueo de un puerto"
 )
-async def abrir_puerto(
+def abrir_puerto(
+    request:   Request,
     puerto:    int,
-    protocolo: str     = "TCP",
-    request:   Request = None,
-    db:        Session = Depends(get_db)
+    protocolo: str = "TCP",
 ):
-    usuario_id = obtener_usuario_id(request)
+    obtener_usuario_id(request)
+    protocolo = validar_puerto_protocolo(puerto, protocolo)
 
     resultado = abrir_puerto_firewall(puerto, protocolo)
 

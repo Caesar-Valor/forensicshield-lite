@@ -41,15 +41,15 @@ def resolver_hostname(ip: str) -> str:
 
 
 def resolver_nombre_netbios(ip: str) -> str:
-    """Nombre NetBIOS — funciona en PCs Windows de la misma red"""
+    """Nombre NetBIOS — timeout reducido a 2s para no bloquear el scan"""
     try:
         resultado = subprocess.run(
             ["nbtstat", "-A", ip],
             capture_output=True,
-            text=True,
-            timeout=6
+            timeout=2
         )
-        for linea in resultado.stdout.splitlines():
+        salida = resultado.stdout.decode("cp1252", errors="replace")
+        for linea in salida.splitlines():
             linea = linea.strip()
             if "<00>" in linea and "UNIQUE" in linea:
                 nombre = linea.split()[0]
@@ -62,17 +62,10 @@ def resolver_nombre_netbios(ip: str) -> str:
 
 def resolver_nombre_completo(ip: str) -> str:
     """
-    Intenta resolver el nombre del dispositivo:
-    1. DNS inverso
-    2. NetBIOS (Windows)
+    Resuelve el nombre del dispositivo solo por DNS inverso.
+    NetBIOS deshabilitado — tardaba hasta 2s por host y bloqueaba el scan.
     """
-    nombre = resolver_hostname(ip)
-    if nombre:
-        return nombre
-    nombre = resolver_nombre_netbios(ip)
-    if nombre:
-        return nombre
-    return None
+    return resolver_hostname(ip)
 
 
 # =============================================
@@ -82,14 +75,13 @@ def resolver_nombre_completo(ip: str) -> str:
 def _ping_host(ip: str) -> bool:
     """
     Hace ping a una IP. Retorna True si responde.
-    Usa -n 1 en Windows (1 paquete, timeout 500ms).
+    Usa -n 1 en Windows (1 paquete, timeout 300ms).
     """
     try:
         resultado = subprocess.run(
-            ["ping", "-n", "1", "-w", "500", ip],
+            ["ping", "-n", "1", "-w", "300", ip],
             capture_output=True,
-            text=True,
-            timeout=2
+            timeout=1
         )
         return resultado.returncode == 0
     except Exception:
@@ -98,9 +90,8 @@ def _ping_host(ip: str) -> bool:
 
 def ping_sweep(prefijo: str, ip_servidor: str) -> None:
     """
-    Hace ping a todas las IPs del rango .1 - .254 en paralelo
-    para poblar la tabla ARP del sistema operativo.
-    Usa ThreadPoolExecutor para ejecutar hasta 50 pings simultáneos.
+    Hace ping a todas las IPs del rango .1 - .254 en paralelo.
+    100 workers simultáneos con timeout reducido para terminar en ~5s.
     """
     ips = [
         f"{prefijo}.{i}"
@@ -108,7 +99,7 @@ def ping_sweep(prefijo: str, ip_servidor: str) -> None:
         if f"{prefijo}.{i}" != ip_servidor
     ]
 
-    with ThreadPoolExecutor(max_workers=50) as executor:
+    with ThreadPoolExecutor(max_workers=100) as executor:
         futures = {executor.submit(_ping_host, ip): ip for ip in ips}
         for future in as_completed(futures):
             try:
@@ -176,13 +167,11 @@ def escanear_red_local() -> dict:
             mac_raw = None
 
         visto.add(ip)
-
-        nombre     = resolver_nombre_completo(ip)
         es_servidor = (ip == ip_servidor)
 
         hosts.append({
             "ip":                   ip,
-            "nombre":               nombre,
+            "nombre":               None,   # se resuelve en paralelo abajo
             "mac":                  mac_raw,
             "fabricante":           None,
             "estado":               "up",
@@ -203,6 +192,14 @@ def escanear_red_local() -> dict:
             "nombre_personalizado": None,
             "notas":                None
         })
+
+    # Resolver nombres en paralelo (antes era secuencial: hasta 6s por host)
+    def _resolver_host(host):
+        host["nombre"] = resolver_nombre_completo(host["ip"])
+        return host
+
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        hosts = list(executor.map(_resolver_host, hosts))
 
     hosts.sort(key=lambda x: int(x["ip"].split(".")[-1]))
 

@@ -170,6 +170,26 @@ class NombreDispositivoCreate(BaseModel):
         v = re.sub(r"[<>\"';&|`]", "", v)
         return v
 
+    @field_validator("mac")
+    @classmethod
+    def validar_mac(cls, v):
+        if not v:
+            return None
+        v = v.strip().upper().replace("-", ":")
+        if not re.match(r"^([0-9A-F]{2}:){5}[0-9A-F]{2}$", v):
+            raise ValueError("MAC inválida.")
+        return v
+
+    @field_validator("notas")
+    @classmethod
+    def validar_notas(cls, v):
+        if v is None:
+            return v
+        v = v.strip()
+        if len(v) > 1000:
+            raise ValueError("Las notas no pueden superar 1000 caracteres.")
+        return v or None
+
     @field_validator("ip")
     @classmethod
     def validar_ip(cls, v):

@@ -9,17 +9,19 @@ import os
 
 # Rutas de recursos
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
-LOGO_PATH = os.path.join(BASE_DIR, "..", "img", "forensicShield.jpeg.jpeg")
+LOGO_PATH = os.path.join(BASE_DIR, "..", "img", "forense2.png")
 OUT_DIR   = os.path.join(BASE_DIR, "reports")
 
-# Paleta de colores
-COLOR_DARK    = (15, 15, 35)       # #0f0f23
-COLOR_ACCENT  = (109, 93, 252)     # #6d5dfc
+# Paleta de colores — terminal verde ForensicShield
+COLOR_DARK    = (6,   13,  8)        # #060d08
+COLOR_ACCENT  = (34,  197, 94)       # #22c55e
+COLOR_ACCENT2 = (22,  163, 74)       # #16a34a  (hover)
 COLOR_WHITE   = (255, 255, 255)
-COLOR_LIGHT   = (245, 245, 250)    # fondo alterno de filas
-COLOR_MUTED   = (120, 120, 140)    # texto secundario
-COLOR_BORDER  = (220, 220, 230)
+COLOR_LIGHT   = (240, 247, 241)      # fondo alterno de filas
+COLOR_MUTED   = (82,  122, 88)       # #527a58
+COLOR_BORDER  = (34,  197, 94, 30)   # borde sutil verde
 
+# Colores de riesgo
 RIESGO_COLOR = {
     "critico": (239, 68,  68),
     "alto":    (249, 115, 22),
@@ -34,9 +36,40 @@ ESTADO_COLOR = {
     "filtered": (234, 179,  8),
 }
 
+URGENCIA_LABEL = {
+    "inmediata": "INMEDIATA",
+    "alta":      "ALTA",
+    "media":     "MEDIA",
+    "baja":      "BAJA",
+}
+
 
 def asegurar_directorio():
     os.makedirs(OUT_DIR, exist_ok=True)
+
+
+def _safe(text: str) -> str:
+    """Convierte texto a Latin-1 seguro para las fuentes built-in de fpdf2."""
+    if not isinstance(text, str):
+        text = str(text)
+    replacements = {
+        "\u2014": "-",   # em dash —
+        "\u2013": "-",   # en dash –
+        "\u2012": "-",   # figure dash
+        "\u2011": "-",   # non-breaking hyphen
+        "\u2010": "-",   # hyphen
+        "\u201c": '"',   # " left double quote
+        "\u201d": '"',   # " right double quote
+        "\u2018": "'",   # ' left single quote
+        "\u2019": "'",   # ' right single quote
+        "\u2026": "...", # … ellipsis
+        "\u00b7": ".",   # · middle dot
+        "\u2022": "-",   # • bullet
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    # Eliminar cualquier otro caracter fuera de Latin-1
+    return text.encode("latin-1", errors="replace").decode("latin-1")
 
 
 class ForensicPDF(FPDF):
@@ -54,13 +87,16 @@ class ForensicPDF(FPDF):
             return
         # Barra superior oscura
         self.set_fill_color(*COLOR_DARK)
-        self.rect(0, 0, 210, 14, "F")
+        self.rect(0, 0, 210, 13, "F")
+        # Línea de acento verde
+        self.set_fill_color(*COLOR_ACCENT)
+        self.rect(0, 13, 210, 0.6, "F")
         # Texto del header
-        self.set_y(3)
+        self.set_y(2.5)
         self.set_font("Helvetica", "B", 7)
         self.set_text_color(*COLOR_ACCENT)
         self.cell(0, 8, "FORENSICSHIELD LITE", align="L")
-        self.set_text_color(180, 180, 200)
+        self.set_text_color(180, 200, 182)
         self.set_font("Helvetica", "", 7)
         self.cell(0, 8, f"Reporte {self.numero_reporte}  |  Pág. {self.page_no()}", align="R")
         self.ln(14)
@@ -69,18 +105,18 @@ class ForensicPDF(FPDF):
     def footer(self):
         self.set_y(-12)
         self.set_draw_color(*COLOR_ACCENT)
-        self.set_line_width(0.4)
+        self.set_line_width(0.3)
         self.line(10, self.get_y(), 200, self.get_y())
         self.set_y(-10)
         self.set_font("Helvetica", "I", 6.5)
         self.set_text_color(*COLOR_MUTED)
-        self.cell(0, 6, f"DOCUMENTO CONFIDENCIAL  ·  {self.numero_reporte}  ·  Generado por ForensicShield Lite", align="C")
+        self.cell(0, 6, f"DOCUMENTO CONFIDENCIAL  |  {self.numero_reporte}  |  Generado por ForensicShield Lite", align="C")
 
 
 # ── Helpers de dibujo ────────────────────────────────────────────────
 
 def _section_title(pdf: ForensicPDF, texto: str):
-    """Encabezado de sección con barra de acento."""
+    """Encabezado de sección con barra de acento verde."""
     pdf.set_fill_color(*COLOR_ACCENT)
     pdf.rect(10, pdf.get_y(), 3, 8, "F")
     pdf.set_x(15)
@@ -114,114 +150,160 @@ def _badge(pdf: ForensicPDF, texto: str, color_rgb: tuple, x: float, y: float, w
     pdf.set_text_color(*COLOR_DARK)
 
 
+def _info_card(pdf: ForensicPDF, etiqueta: str, valor: str, x: float, y: float, w: float = 85):
+    """Tarjeta de información con etiqueta y valor."""
+    pdf.set_xy(x, y)
+    pdf.set_fill_color(*COLOR_LIGHT)
+    pdf.rect(x, y, w, 16, "F")
+    # Línea izquierda de acento
+    pdf.set_fill_color(*COLOR_ACCENT)
+    pdf.rect(x, y, 2, 16, "F")
+    # Etiqueta
+    pdf.set_xy(x + 4, y + 2)
+    pdf.set_font("Helvetica", "B", 6.5)
+    pdf.set_text_color(*COLOR_MUTED)
+    pdf.cell(w - 4, 5, _safe(etiqueta.upper()))
+    # Valor
+    pdf.set_xy(x + 4, y + 8)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_text_color(*COLOR_DARK)
+    pdf.cell(w - 4, 6, _safe(valor))
+
+
 # ── Construcción de páginas ──────────────────────────────────────────
 
 def _pagina_portada(pdf: ForensicPDF, datos: dict):
-    """Página 1: portada con logo, número de reporte y datos del escaneo."""
+    """Página 1: portada con logo, fecha, solicitud y datos del escaneo."""
     pdf.add_page()
 
-    # Fondo oscuro superior (60% de la página)
+    # ── Fondo oscuro — zona superior ────────────────────────────────
     pdf.set_fill_color(*COLOR_DARK)
-    pdf.rect(0, 0, 210, 140, "F")
+    pdf.rect(0, 0, 210, 110, "F")
 
-    # Logo
+    # ── Logo forense2.png — centrado, no ocupa todo el ancho ─────────
+    logo_w = 70   # ancho del logo en mm
+    logo_x = (210 - logo_w) / 2   # centrado horizontalmente
+    logo_y = 10
     if os.path.exists(LOGO_PATH):
         try:
-            pdf.image(LOGO_PATH, x=80, y=18, w=50)
+            pdf.image(LOGO_PATH, x=logo_x, y=logo_y, w=logo_w)
         except Exception:
-            pass
-    pdf.ln(72)
+            # fallback: texto si la imagen falla
+            pdf.set_xy(0, 20)
+            pdf.set_font("Helvetica", "B", 16)
+            pdf.set_text_color(*COLOR_ACCENT)
+            pdf.cell(0, 10, "FORENSICSHIELD LITE", align="C")
 
-    # Título principal
-    pdf.set_font("Helvetica", "B", 20)
-    pdf.set_text_color(*COLOR_WHITE)
-    pdf.cell(0, 10, "REPORTE DE AUDITORÍA", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.set_text_color(*COLOR_ACCENT)
-    pdf.cell(0, 8, "DE SEGURIDAD", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(6)
-
-    # Línea decorativa
+    # ── Línea decorativa bajo el logo ───────────────────────────────
     pdf.set_draw_color(*COLOR_ACCENT)
-    pdf.set_line_width(1.0)
-    pdf.line(60, pdf.get_y(), 150, pdf.get_y())
-    pdf.ln(5)
+    pdf.set_line_width(0.8)
+    pdf.line(55, 64, 155, 64)
 
-    # Número de reporte destacado
-    pdf.set_font("Helvetica", "B", 13)
+    # ── Título del reporte ───────────────────────────────────────────
+    pdf.set_xy(0, 67)
+    pdf.set_font("Helvetica", "B", 18)
     pdf.set_text_color(*COLOR_WHITE)
-    pdf.cell(0, 8, datos["numero_reporte"], align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 9, "REPORTE DE AUDITORÍA DE SEGURIDAD", align="C", new_x="LMARGIN", new_y="NEXT")
+
+    # ── Número de reporte ────────────────────────────────────────────
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_text_color(*COLOR_ACCENT)
+    pdf.cell(0, 7, _safe(datos["numero_reporte"]), align="C", new_x="LMARGIN", new_y="NEXT")
+
+    # ── Fecha y hora de generación ───────────────────────────────────
+    pdf.set_font("Helvetica", "", 8.5)
+    pdf.set_text_color(180, 220, 185)
+    pdf.cell(0, 6, _safe(f"Generado el  {datos['fecha_hora']}"), align="C", new_x="LMARGIN", new_y="NEXT")
+
     pdf.ln(4)
 
-    # Fecha y hora
-    pdf.set_font("Helvetica", "", 9)
-    pdf.set_text_color(180, 180, 200)
-    pdf.cell(0, 6, f"Generado el {datos['fecha_hora']}", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(20)
+    # ── Analista ─────────────────────────────────────────────────────
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(120, 160, 125)
+    pdf.cell(0, 5, _safe(f"Analista: {datos['analista']}"), align="C", new_x="LMARGIN", new_y="NEXT")
 
-    # Zona blanca de datos del escaneo
+    # ── Zona blanca — datos del escaneo ─────────────────────────────
     pdf.set_fill_color(*COLOR_WHITE)
-    pdf.rect(0, 140, 210, 157, "F")
-    pdf.set_y(148)
+    pdf.rect(0, 110, 210, 187, "F")
+    pdf.set_y(118)
 
-    # Datos principales en dos columnas
-    col_w = 85
-    col_gap = 10
-    lm = 15
+    # ── Sección: Solicitud del análisis ─────────────────────────────
+    _section_title(pdf, "SOLICITUD DE ANÁLISIS")
 
-    campos = [
-        ("IP Objetivo",    datos["target_ip"]),
-        ("Modo de Escaneo", datos["modo"].capitalize()),
-        ("Duración",       f"{datos['duracion_seg']} segundos"),
-        ("Analista",       datos["analista"]),
-        ("Puertos Abiertos", str(datos["puertos_abiertos"])),
-        ("Total Puertos",  str(datos["total_puertos"])),
-    ]
-
-    pdf.set_font("Helvetica", "B", 9)
+    # Descripción de lo que el usuario pidió
+    pdf.set_x(14)
+    pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(*COLOR_MUTED)
+    modo_desc = {
+        "rapido":        "25 puertos más comunes",
+        "completo":      "Todos los puertos (1-65535)",
+        "personalizado": "Puertos definidos por el analista",
+    }.get(datos.get("modo", "").lower(), "Escaneo de puertos")
+    pdf.multi_cell(0, 5.5, f"Se realizó un análisis de red sobre el objetivo indicado utilizando el modo seleccionado por el analista. "
+                           f"A continuación se detalla la configuración de la solicitud y los resultados obtenidos.")
+    pdf.ln(5)
 
-    for i, (clave, valor) in enumerate(campos):
-        col = i % 2
-        if col == 0:
-            if i > 0:
-                pdf.ln(14)
-            pdf.set_x(lm)
-        else:
-            pdf.set_xy(lm + col_w + col_gap, pdf.get_y() - 14)
+    # Tarjetas de información en dos columnas
+    card_w   = 88
+    card_gap = 6
+    lm       = 12
+    card_y   = pdf.get_y()
 
-        x_pos = lm + col * (col_w + col_gap)
-        y_pos = pdf.get_y()
+    _info_card(pdf, "IP / Host objetivo",   datos["target_ip"],                  lm,              card_y, card_w)
+    _info_card(pdf, "Modo de escaneo",       datos["modo"].capitalize(),          lm + card_w + card_gap, card_y, card_w)
 
-        # Etiqueta
-        pdf.set_xy(x_pos, y_pos)
-        pdf.set_font("Helvetica", "B", 7)
-        pdf.set_text_color(*COLOR_MUTED)
-        pdf.cell(col_w, 5, clave.upper())
+    card_y2 = card_y + 20
+    _info_card(pdf, "Duración del escaneo",  f"{datos['duracion_seg']} segundos", lm,              card_y2, card_w)
+    _info_card(pdf, "Descripción del modo",  modo_desc,                           lm + card_w + card_gap, card_y2, card_w)
 
-        # Valor
-        pdf.set_xy(x_pos, y_pos + 5)
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.set_text_color(*COLOR_DARK)
-        pdf.cell(col_w, 7, str(valor))
+    pdf.set_y(card_y2 + 20)
+    pdf.ln(4)
 
-    # Riesgo máximo
-    pdf.set_y(210)
+    # ── Sección: Resumen de resultados ───────────────────────────────
+    _section_title(pdf, "RESUMEN DE RESULTADOS")
+
+    card_y3 = pdf.get_y()
+    card_w3 = 55
+    gap3    = 4
+
+    _info_card(pdf, "Puertos abiertos",   str(datos["puertos_abiertos"]),     lm,                        card_y3, card_w3)
+    _info_card(pdf, "Total analizados",   str(datos["total_puertos"]),         lm + card_w3 + gap3,       card_y3, card_w3)
+    _info_card(pdf, "Cerrados / filtrados",
+               str(datos["total_puertos"] - datos["puertos_abiertos"]),
+               lm + 2*(card_w3 + gap3),   card_y3, card_w3)
+
+    pdf.set_y(card_y3 + 20)
+    pdf.ln(6)
+
+    # ── Nivel de riesgo máximo ───────────────────────────────────────
     pdf.set_x(lm)
-    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_font("Helvetica", "B", 8)
     pdf.set_text_color(*COLOR_MUTED)
-    pdf.cell(0, 5, "NIVEL DE RIESGO MÁXIMO DETECTADO")
-    pdf.ln(7)
+    pdf.cell(0, 5, "NIVEL DE RIESGO MÁXIMO DETECTADO", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(3)
     pdf.set_x(lm)
     riesgo = datos.get("riesgo_maximo", "ninguno")
-    r, g, b = RIESGO_COLOR.get(riesgo, COLOR_MUTED)
+    r, g, b = RIESGO_COLOR.get(riesgo, (100, 116, 139))
     pdf.set_fill_color(r, g, b)
     pdf.set_text_color(*COLOR_WHITE)
-    pdf.set_font("Helvetica", "B", 10)
-    pdf.cell(50, 9, riesgo.upper(), fill=True, align="C")
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(55, 10, riesgo.upper(), fill=True, align="C")
 
-    # Pie de portada
-    pdf.set_y(270)
+    # Descripción del nivel de riesgo
+    riesgo_desc = {
+        "critico": "Se detectaron puertos con vulnerabilidades críticas conocidas. Acción inmediata requerida.",
+        "alto":    "Se detectaron servicios expuestos con alto potencial de explotación. Revisar urgentemente.",
+        "medio":   "Se detectaron configuraciones que pueden representar riesgo. Revisar y mitigar.",
+        "bajo":    "Riesgo bajo detectado. Se recomienda revisión preventiva.",
+        "ninguno": "No se detectaron puertos de alto riesgo en este escaneo.",
+    }.get(riesgo, "")
+    pdf.set_xy(lm + 59, pdf.get_y() - 10)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.set_text_color(*COLOR_MUTED)
+    pdf.multi_cell(120, 5, riesgo_desc)
+
+    # ── Pie de portada ───────────────────────────────────────────────
+    pdf.set_y(273)
     pdf.set_font("Helvetica", "I", 7)
     pdf.set_text_color(*COLOR_MUTED)
     pdf.cell(0, 5, "Este documento es confidencial y está destinado exclusivamente al analista autorizado.", align="C")
@@ -242,46 +324,42 @@ def _pagina_puertos(pdf: ForensicPDF, puertos: list):
     # Cabecera de tabla
     cols = [
         ("Puerto",    18),
-        ("Proto.",    18),
-        ("Estado",    28),
-        ("Servicio",  38),
-        ("Versión",   52),
-        ("Riesgo",    28),
+        ("Proto.",    16),
+        ("Estado",    27),
+        ("Servicio",  37),
+        ("Versión",   51),
+        ("Riesgo",    27),
     ]
-    total_w = sum(c[1] for c in cols)
 
-    pdf.set_fill_color(*COLOR_DARK)
-    pdf.set_text_color(*COLOR_WHITE)
-    pdf.set_font("Helvetica", "B", 8)
+    def _tabla_header():
+        pdf.set_fill_color(*COLOR_DARK)
+        pdf.set_text_color(*COLOR_ACCENT)
+        pdf.set_font("Helvetica", "B", 8)
+        for label, w in cols:
+            pdf.cell(w, 8, label, fill=True, align="C")
+        # Línea acento bajo el header
+        pdf.ln()
+        pdf.set_fill_color(*COLOR_ACCENT)
+        pdf.rect(10, pdf.get_y(), sum(c[1] for c in cols), 0.5, "F")
+        pdf.ln(0.5)
 
-    for label, w in cols:
-        pdf.cell(w, 8, label, fill=True, align="C")
-    pdf.ln()
+    _tabla_header()
 
     # Filas
     pdf.set_font("Helvetica", "", 8)
     for i, p in enumerate(puertos):
-        # Check page break manually
         if pdf.get_y() > 265:
             pdf.add_page()
             pdf.ln(4)
-            # Repetir cabecera
-            pdf.set_fill_color(*COLOR_DARK)
-            pdf.set_text_color(*COLOR_WHITE)
-            pdf.set_font("Helvetica", "B", 8)
-            for label, w in cols:
-                pdf.cell(w, 8, label, fill=True, align="C")
-            pdf.ln()
+            _tabla_header()
             pdf.set_font("Helvetica", "", 8)
 
         fill_bg = (i % 2 == 1)
         row_h   = 7
         y_start = pdf.get_y()
 
-        if fill_bg:
-            pdf.set_fill_color(*COLOR_LIGHT)
-        else:
-            pdf.set_fill_color(*COLOR_WHITE)
+        fill_color = COLOR_LIGHT if fill_bg else COLOR_WHITE
+        pdf.set_fill_color(*fill_color)
 
         estado = p.get("estado", "")
         riesgo = p.get("riesgo", "ninguno") or "ninguno"
@@ -295,29 +373,28 @@ def _pagina_puertos(pdf: ForensicPDF, puertos: list):
         pdf.set_font("Helvetica", "", 8)
         pdf.cell(cols[1][1], row_h, (p.get("protocolo") or "TCP").upper(), fill=fill_bg, align="C")
 
-        # Estado (con color)
-        x_before = pdf.get_x()
+        # Estado (con badge de color)
+        x_estado = pdf.get_x()
         pdf.cell(cols[2][1], row_h, "", fill=fill_bg, align="C")
-        ec = ESTADO_COLOR.get(estado, COLOR_MUTED)
+        ec = ESTADO_COLOR.get(estado, (100, 116, 139))
         label_map = {"open": "Abierto", "closed": "Cerrado", "filtered": "Filtrado"}
-        _badge(pdf, label_map.get(estado, estado), ec, x_before + 1, y_start, cols[2][1] - 2)
+        _badge(pdf, label_map.get(estado, estado), ec, x_estado + 1, y_start, cols[2][1] - 2)
 
         # Servicio
-        pdf.set_xy(pdf.get_x() - cols[2][1] + x_before - pdf.get_x() + sum(c[1] for c in cols[:3]) + 10, y_start)
-        servicio = (p.get("servicio") or "—")[:16]
+        pdf.set_x(10 + sum(c[1] for c in cols[:3]))
+        servicio = _safe(p.get("servicio") or "-")[:16]
         pdf.set_text_color(*COLOR_DARK)
         pdf.set_font("Helvetica", "", 8)
-        pdf.set_x(10 + sum(c[1] for c in cols[:3]))
         pdf.cell(cols[3][1], row_h, servicio, fill=fill_bg)
 
         # Versión
-        version = (p.get("version") or "—")[:22]
+        version = _safe(p.get("version") or "-")[:22]
         pdf.cell(cols[4][1], row_h, version, fill=fill_bg)
 
-        # Riesgo (con color)
+        # Riesgo (con badge de color)
         x_riesgo = pdf.get_x()
         pdf.cell(cols[5][1], row_h, "", fill=fill_bg, align="C")
-        rc = RIESGO_COLOR.get(riesgo, COLOR_MUTED)
+        rc = RIESGO_COLOR.get(riesgo, (100, 116, 139))
         _badge(pdf, riesgo, rc, x_riesgo + 1, y_start, cols[5][1] - 2)
 
         pdf.ln(row_h)
@@ -326,82 +403,105 @@ def _pagina_puertos(pdf: ForensicPDF, puertos: list):
 
 
 def _pagina_recomendaciones(pdf: ForensicPDF, recomendaciones: list):
-    """Página(s) de recomendaciones de seguridad."""
+    """Página(s) de recomendaciones — explica por qué el puerto es un riesgo y cómo cerrarlo."""
     if not recomendaciones:
         return
 
     pdf.add_page()
     pdf.ln(4)
-    _section_title(pdf, "RECOMENDACIONES DE SEGURIDAD")
+    _section_title(pdf, "ANÁLISIS DE RIESGOS Y RECOMENDACIONES")
+
+    # Introducción
+    pdf.set_x(14)
+    pdf.set_font("Helvetica", "", 8.5)
+    pdf.set_text_color(*COLOR_MUTED)
+    pdf.multi_cell(0, 5, "Para cada puerto abierto detectado se detalla: el motivo por el cual representa un riesgo, "
+                         "la acción recomendada para mitigarlo y el comando específico para bloquearlo en el sistema.")
+    pdf.ln(5)
 
     for rec in recomendaciones:
-        if pdf.get_y() > 240:
+        # Calcular altura estimada para evitar corte de bloque
+        if pdf.get_y() > 230:
             pdf.add_page()
             pdf.ln(4)
 
         riesgo = rec.get("riesgo", "ninguno")
-        rc     = RIESGO_COLOR.get(riesgo, COLOR_MUTED)
+        rc     = RIESGO_COLOR.get(riesgo, (100, 116, 139))
 
-        # Barra izquierda de color + título
+        # ── Encabezado del bloque ─────────────────────────────────
         y_box = pdf.get_y()
+        # Barra lateral de color de riesgo
         pdf.set_fill_color(*rc)
-        pdf.rect(10, y_box, 2, 8, "F")
-        pdf.set_x(14)
+        pdf.rect(10, y_box, 3, 9, "F")
+        pdf.set_x(15)
         pdf.set_font("Helvetica", "B", 10)
         pdf.set_text_color(*COLOR_DARK)
-        puerto_txt = f"Puerto {rec.get('puerto')} — {rec.get('titulo', '')}"
+        puerto_txt = _safe(f"Puerto {rec.get('puerto')}  -  {rec.get('titulo', '')}")
         pdf.multi_cell(0, 6, puerto_txt)
 
-        # Badge riesgo + urgencia
-        pdf.set_x(14)
+        # Badges: riesgo + urgencia
+        pdf.set_x(15)
         pdf.set_font("Helvetica", "B", 7)
         pdf.set_fill_color(*rc)
         pdf.set_text_color(*COLOR_WHITE)
-        pdf.cell(22, 5, riesgo.upper(), fill=True, align="C")
-        urgencia = rec.get("urgencia", "")
+        pdf.cell(24, 5, riesgo.upper(), fill=True, align="C")
+
+        urgencia = rec.get("urgencia", "baja")
         pdf.set_x(pdf.get_x() + 3)
-        pdf.set_fill_color(70, 70, 90)
-        pdf.cell(28, 5, f"urgencia: {urgencia}", fill=True, align="C")
-        pdf.ln(8)
+        pdf.set_fill_color(*COLOR_DARK)
+        pdf.cell(42, 5, f"URGENCIA: {URGENCIA_LABEL.get(urgencia, urgencia.upper())}", fill=True, align="C")
+        pdf.ln(9)
 
-        # Problema
-        pdf.set_x(14)
+        # ── ¿Por qué es un riesgo? ───────────────────────────────
+        pdf.set_x(15)
         pdf.set_font("Helvetica", "B", 8)
-        pdf.set_text_color(*COLOR_MUTED)
-        pdf.cell(25, 5, "PROBLEMA:")
+        pdf.set_text_color(*rc)
+        pdf.cell(38, 5, "POR QUE ES UN RIESGO:")
         pdf.set_font("Helvetica", "", 8)
         pdf.set_text_color(*COLOR_DARK)
-        pdf.multi_cell(0, 5, rec.get("problema", ""))
+        pdf.set_x(53)
+        # Usar multi_cell pero alineado al margen izquierdo + offset
+        y_antes = pdf.get_y()
+        pdf.multi_cell(0, 5, _safe(rec.get("problema", "-")))
 
-        # Acción
-        pdf.set_x(14)
+        # ── Acción recomendada ───────────────────────────────────
+        pdf.set_x(15)
         pdf.set_font("Helvetica", "B", 8)
-        pdf.set_text_color(*COLOR_MUTED)
-        pdf.cell(25, 5, "ACCIÓN:")
+        pdf.set_text_color(*COLOR_ACCENT2)
+        pdf.cell(38, 5, "COMO CERRARLO:")
         pdf.set_font("Helvetica", "", 8)
         pdf.set_text_color(*COLOR_DARK)
-        pdf.multi_cell(0, 5, rec.get("accion", ""))
+        pdf.set_x(53)
+        pdf.multi_cell(0, 5, _safe(rec.get("accion", "-")))
 
-        # Comando
+        # ── Comando ──────────────────────────────────────────────
         if rec.get("comando"):
-            pdf.set_x(14)
-            pdf.set_fill_color(30, 30, 50)
-            pdf.set_text_color(180, 220, 255)
-            pdf.set_font("Courier", "", 7)
-            cmd = rec["comando"][:95]
-            pdf.cell(0, 6, f"  {cmd}", fill=True, new_x="LMARGIN", new_y="NEXT")
+            pdf.set_x(15)
+            pdf.set_font("Helvetica", "B", 7.5)
+            pdf.set_text_color(*COLOR_MUTED)
+            pdf.cell(0, 5, "COMANDO:", new_x="LMARGIN", new_y="NEXT")
+            pdf.set_x(15)
+            # Bloque oscuro estilo terminal
+            pdf.set_fill_color(*COLOR_DARK)
+            pdf.set_text_color(*COLOR_ACCENT)
+            pdf.set_font("Courier", "B", 7.5)
+            cmd = _safe(rec["comando"])
+            # Dividir comandos largos
+            if len(cmd) > 90:
+                cmd = cmd[:90] + "..."
+            pdf.cell(0, 7, f"  $ {cmd}  ", fill=True, new_x="LMARGIN", new_y="NEXT")
             pdf.set_text_color(*COLOR_DARK)
 
-        # Referencia
+        # ── Referencia ───────────────────────────────────────────
         if rec.get("referencia"):
-            pdf.set_x(14)
+            pdf.set_x(15)
             pdf.set_font("Helvetica", "I", 7)
             pdf.set_text_color(*COLOR_MUTED)
-            pdf.cell(0, 5, f"Referencia: {rec['referencia']}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 5, _safe(f"Referencia: {rec['referencia']}"), new_x="LMARGIN", new_y="NEXT")
 
         pdf.ln(5)
-        # Separador
-        pdf.set_draw_color(*COLOR_BORDER)
+        # Línea separadora
+        pdf.set_draw_color(200, 225, 202)
         pdf.set_line_width(0.2)
         pdf.line(14, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(5)
@@ -427,12 +527,12 @@ def generar_pdf(
 
     # Datos de portada
     datos_portada = {
-        "numero_reporte": numero_reporte,
-        "fecha_hora":     datos_escaneo.get("fecha_hora", "—"),
-        "target_ip":      datos_escaneo.get("target_ip", "—"),
-        "modo":           datos_escaneo.get("modo", "—"),
-        "duracion_seg":   datos_escaneo.get("duracion_seg", 0),
-        "analista":       analista,
+        "numero_reporte":   numero_reporte,
+        "fecha_hora":       datos_escaneo.get("fecha_hora", "-"),
+        "target_ip":        datos_escaneo.get("target_ip", "-"),
+        "modo":             datos_escaneo.get("modo", "-"),
+        "duracion_seg":     datos_escaneo.get("duracion_seg", 0),
+        "analista":         analista,
         "puertos_abiertos": datos_escaneo.get("puertos_abiertos", 0),
         "total_puertos":    len(puertos),
         "riesgo_maximo":    datos_escaneo.get("riesgo_maximo", "ninguno"),

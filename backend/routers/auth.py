@@ -6,6 +6,7 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from datetime import datetime, timezone, timedelta
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -57,7 +58,7 @@ async def login(
 
     # ─── 2. Buscar usuario ────────────────────────────────────────────
     usuario = db.query(Usuario).filter(
-        Usuario.email == datos.email
+        func.lower(Usuario.email) == datos.email.lower()
     ).first()
 
     # ─── 3. Verificar contraseña ──────────────────────────────────────

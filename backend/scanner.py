@@ -95,6 +95,10 @@ PUERTOS_RAPIDO = (
     "6379,8080,8443,27017"
 )
 
+# Límites de tiempo por host (segundos)
+TIMEOUT_RAPIDO_SEG   = 120
+TIMEOUT_COMPLETO_SEG = 900
+
 # =============================================
 # FUNCIÓN PRINCIPAL DE ESCANEO
 # =============================================
@@ -117,18 +121,16 @@ def ejecutar_escaneo(
         - resumen: contadores y duración
     """
 
-    # ── Validar IP básica ────────────────────────────────────────────
+    # ── Validar IP / resolver hostname ───────────────────────────────
+    # Nmap indexa los resultados por IP, así que un hostname se resuelve
+    # antes del escaneo; si no, `nm.all_hosts()` nunca lo contendría.
     try:
-        socket.inet_aton(target_ip)
-    except socket.error:
-        # Puede ser un hostname — intentar resolverlo
-        try:
-            socket.gethostbyname(target_ip)
-        except socket.gaierror:
-            return {
-                "error": f"IP o hostname inválido: {target_ip}",
-                "exitoso": False
-            }
+        ip_escaneo = socket.gethostbyname(target_ip)
+    except (socket.gaierror, UnicodeError):
+        return {
+            "error": f"IP o hostname inválido: {target_ip}",
+            "exitoso": False
+        }
 
     # ── Configurar argumentos de Nmap ────────────────────────────────
     if puertos_custom:
@@ -141,20 +143,26 @@ def ejecutar_escaneo(
         rango_puertos = PUERTOS_RAPIDO
         descripcion_modo = "rapido"
 
-    # -sV  → detectar versiones de servicios
-    # -T4  → velocidad agresiva (equilibrio velocidad/precisión)
-    # --open → mostrar solo puertos abiertos en el output (igual escaneamos todos)
-    # -sV  → detectar versiones de servicios
-    # -T4  → velocidad agresiva (equilibrio velocidad/precisión)
-    # --host-timeout → evita cuelgues en hosts que no responden
-    argumentos_nmap = "-sV -T4 --host-timeout 120s"
+    # Modo rápido: intensidad de versión reducida + menos reintentos + timeout corto
+    # Modo completo: detección completa de versiones con timeout mayor
+    # --version-intensity 2 → reduce sondas de detección de servicios (default=7)
+    # --max-retries 1       → evita reintentos innecesarios en puertos filtrados
+    # --host-timeout        → corta el scan si el host no responde a tiempo
+    # Si nmap alcanza --host-timeout descarta TODOS los resultados del host,
+    # por eso el modo completo (65535 puertos + versiones) necesita margen amplio.
+    if descripcion_modo == "completo":
+        nmap_args_list = ["-sV", "-T4", "--host-timeout", f"{TIMEOUT_COMPLETO_SEG}s", "--max-retries", "2"]
+    else:
+        nmap_args_list = ["-sV", "-T4", "--host-timeout", f"{TIMEOUT_RAPIDO_SEG}s", "--version-intensity", "2", "--max-retries", "1"]
+    argumentos_nmap = " ".join(nmap_args_list)
+    timeout_proceso = (TIMEOUT_COMPLETO_SEG if descripcion_modo == "completo" else TIMEOUT_RAPIDO_SEG) + 60
 
     nm = nmap.PortScanner()
     inicio = datetime.now(timezone.utc)
 
     try:
         nm.scan(
-            hosts     = target_ip,
+            hosts     = ip_escaneo,
             ports     = rango_puertos,
             arguments = argumentos_nmap
         )
@@ -165,15 +173,15 @@ def ejecutar_escaneo(
         # Solución: invocar nmap directamente como bytes y parsear XML.
         try:
             cmd = [
-                "nmap", "-sV", "-T4", "--host-timeout", "120s",
+                "nmap", *nmap_args_list,
                 "-oX", "-",       # XML por stdout — sin caracteres raros
                 "-p", rango_puertos,
-                target_ip
+                ip_escaneo
             ]
             proc = subprocess.run(
                 cmd,
                 capture_output=True,   # lee bytes, no texto
-                timeout=300
+                timeout=timeout_proceso
             )
             if proc.returncode != 0:
                 err_msg = _safe_decode(proc.stderr) if proc.stderr else "Error desconocido"
@@ -210,7 +218,7 @@ def ejecutar_escaneo(
     }
 
     # Verificar si el host respondió
-    if target_ip not in nm.all_hosts():
+    if ip_escaneo not in nm.all_hosts():
         return {
             "ip":       target_ip,
             "hostname": target_ip,
@@ -229,7 +237,7 @@ def ejecutar_escaneo(
             "advertencia": "El host no respondió. Puede estar apagado o bloquear pings."
         }
 
-    host_info = nm[target_ip]
+    host_info = nm[ip_escaneo]
 
     # Hostname
     hostnames = host_info.hostnames()
@@ -286,5 +294,3 @@ def ejecutar_escaneo(
         },
         "exitoso": True
     }
-
-from recomendaciones import generar_recomendaciones

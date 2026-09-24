@@ -113,7 +113,7 @@ btnGenerar.addEventListener("click", async () => {
     const data = await res.json();
 
     if (!res.ok) {
-      mostrarAlert(data.detail || "Error al generar el reporte.", "error");
+      mostrarAlert(mensajeError(data.detail) || "Error al generar el reporte.", "error");
       return;
     }
 
@@ -220,6 +220,16 @@ function actualizarMetricas(reportes) {
 }
 
 /* ===== UTILIDADES ===== */
+// FastAPI devuelve `detail` como string o como lista de errores de validación (422)
+function mensajeError(detail) {
+  if (!detail) return "";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(e => (e.msg || "").replace(/^Value error, /, "")).filter(Boolean).join(" ");
+  }
+  return "";
+}
+
 function mostrarAlert(msg, tipo) {
   genAlert.textContent = msg;
   genAlert.className   = `rep-alert ${tipo}`;

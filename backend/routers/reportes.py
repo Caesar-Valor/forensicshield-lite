@@ -12,7 +12,7 @@ import os
 
 from database        import get_db
 from models          import Reporte, Escaneo, ScanResultado, Usuario
-from auth            import verificar_token
+from auth            import verificar_sesion
 from recomendaciones import generar_recomendaciones
 from pdf_generator   import generar_pdf
 
@@ -26,7 +26,7 @@ def obtener_usuario(request: Request, db: Session) -> Usuario:
     token = request.cookies.get("fs_token")
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token requerido.")
-    token_data = verificar_token(token)
+    token_data = verificar_sesion(token)
     if not token_data:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido o expirado.")
     usuario = db.query(Usuario).filter(Usuario.id == token_data.usuario_id).first()
@@ -35,8 +35,24 @@ def obtener_usuario(request: Request, db: Session) -> Usuario:
     return usuario
 
 
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+         "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def fecha_larga(dt: datetime) -> str:
+    return f"{dt.day:02d} de {MESES[dt.month - 1]} de {dt.year}, {dt:%H:%M:%S} UTC"
+
+
 def calcular_numero(reporte_id: int, año: int) -> str:
     return f"FSL-{año}-{reporte_id:06d}"
+
+
+def extraer_modo(escaneo: Escaneo) -> str:
+    """El modo se guarda en `notas` al iniciar el escaneo ("Modo: rapido")."""
+    notas = escaneo.notas or ""
+    if notas.startswith("Modo:"):
+        return notas.split(":", 1)[1].strip() or "rapido"
+    return "rapido"
 
 
 def calcular_riesgo_maximo(puertos: list) -> str:
@@ -54,7 +70,7 @@ def calcular_riesgo_maximo(puertos: list) -> str:
     "/generar/{escaneo_id}",
     summary="Generar reporte PDF de un escaneo"
 )
-async def generar_reporte(
+def generar_reporte(
     escaneo_id: int,
     request:    Request,
     db:         Session = Depends(get_db)
@@ -108,7 +124,7 @@ async def generar_reporte(
         total_hallazgos = len([p for p in puertos if p["estado"] == "open"]),
         contenido       = {
             "target_ip":      escaneo.target_ip,
-            "modo":           escaneo.target_nombre or "rapido",
+            "modo":           extraer_modo(escaneo),
             "duracion_seg":   escaneo.duracion_seg or 0,
             "puertos_abiertos": escaneo.puertos_abiertos or 0,
             "riesgo_maximo":  riesgo_max,
@@ -125,11 +141,11 @@ async def generar_reporte(
     try:
         datos_escaneo = {
             "target_ip":        escaneo.target_ip,
-            "modo":             escaneo.target_nombre or "rapido",
+            "modo":             extraer_modo(escaneo),
             "duracion_seg":     escaneo.duracion_seg or 0,
             "puertos_abiertos": escaneo.puertos_abiertos or 0,
             "riesgo_maximo":    riesgo_max,
-            "fecha_hora":       now.strftime("%d de %B de %Y, %H:%M:%S"),
+            "fecha_hora":       fecha_larga(now),
         }
 
         ruta_pdf = generar_pdf(
@@ -148,7 +164,8 @@ async def generar_reporte(
         reporte.estado       = "completado"
         reporte.ruta_archivo = ruta_pdf
         reporte.hash_sha256  = hash_pdf
-        reporte.contenido["numero_reporte"] = numero_reporte
+        # Reasignar el dict: SQLAlchemy no detecta mutaciones in-place en JSONB
+        reporte.contenido = {**reporte.contenido, "numero_reporte": numero_reporte}
         reporte.titulo = f"{numero_reporte} — Auditoría {escaneo.target_ip}"
         db.commit()
 
@@ -160,8 +177,11 @@ async def generar_reporte(
         }
 
     except Exception as e:
-        reporte.estado = "fallido"
-        db.commit()
+        try:
+            reporte.estado = "fallido"
+            db.commit()
+        except Exception:
+            db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al generar el PDF: {str(e)}"

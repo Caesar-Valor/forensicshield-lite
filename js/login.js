@@ -9,119 +9,129 @@
 const API_URL = "http://127.0.0.1:8000";
 
 /* ===== FONDO ANIMADO THREE.JS ===== */
-const canvas   = document.getElementById("canvas-bg");
-const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Envuelto en try-catch: si WebGL no está disponible o Three.js no cargó
+// del CDN, el fondo simplemente no se muestra pero el login sigue funcionando.
+try {
+  if (typeof THREE !== "undefined") {
+    const canvas   = document.getElementById("canvas-bg");
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-const scene  = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const scene  = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-const uniforms = {
-  u_time:  { value: 0 },
-  u_res:   { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-  u_theme: { value: 0.0 }
-};
+    const uniforms = {
+      u_time:  { value: 0 },
+      u_res:   { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_theme: { value: 0.0 }
+    };
 
-const material = new THREE.ShaderMaterial({
-  uniforms,
-  vertexShader: `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = vec4(position, 1.0);
+    const material = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float u_time;
+        uniform vec2  u_res;
+        uniform float u_theme;
+        varying vec2  vUv;
+
+        float random(in vec2 _st) {
+          return fract(sin(dot(_st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        }
+        float noise(in vec2 _st) {
+          vec2 i = floor(_st);
+          vec2 f = fract(_st);
+          float a = random(i);
+          float b = random(i + vec2(1.0, 0.0));
+          float c = random(i + vec2(0.0, 1.0));
+          float d = random(i + vec2(1.0, 1.0));
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+        float fbm(in vec2 _st) {
+          float v = 0.0;
+          float a = 0.5;
+          vec2  shift = vec2(100.0);
+          mat2  rot   = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+          for (int i = 0; i < 5; ++i) {
+            v  += a * noise(_st);
+            _st = rot * _st * 2.0 + shift;
+            a  *= 0.5;
+          }
+          return v;
+        }
+        void main() {
+          vec2 st = gl_FragCoord.xy / u_res.xy;
+          st.x *= u_res.x / u_res.y;
+
+          vec2 q = vec2(0.);
+          q.x = fbm(st + 0.00 * u_time);
+          q.y = fbm(st + vec2(1.0));
+
+          vec2 r = vec2(0.);
+          r.x = fbm(st + 1.0 * q + vec2(1.7,  9.2) + 0.150 * u_time);
+          r.y = fbm(st + 1.0 * q + vec2(8.3,  2.8) + 0.126 * u_time);
+
+          vec3 dark1      = vec3(0.02, 0.05, 0.02);
+          vec3 dark2      = vec3(0.03, 0.08, 0.04);
+          vec3 darkAccent = vec3(0.05, 0.28, 0.10);
+          vec3 light1     = vec3(0.94, 0.98, 0.94);
+          vec3 light2     = vec3(0.88, 0.96, 0.89);
+          vec3 lightAccent= vec3(0.30, 0.75, 0.40);
+
+          vec3 c1      = mix(dark1,      light1,      u_theme);
+          vec3 c2      = mix(dark2,      light2,      u_theme);
+          vec3 cAccent = mix(darkAccent, lightAccent, u_theme);
+
+          vec3 color = mix(c1, c2, length(q));
+          color      = mix(color, cAccent, length(r) * 0.4);
+
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `
+    });
+
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+    scene.add(plane);
+
+    function resize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      renderer.setSize(w, h);
+      uniforms.u_res.value.set(w, h);
     }
-  `,
-  fragmentShader: `
-    uniform float u_time;
-    uniform vec2  u_res;
-    uniform float u_theme;
-    varying vec2  vUv;
+    window.addEventListener("resize", resize);
+    resize();
 
-    float random(in vec2 _st) {
-      return fract(sin(dot(_st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    function animateBg(t) {
+      requestAnimationFrame(animateBg);
+      uniforms.u_time.value = t * 0.001;
+      renderer.render(scene, camera);
     }
-    float noise(in vec2 _st) {
-      vec2 i = floor(_st);
-      vec2 f = fract(_st);
-      float a = random(i);
-      float b = random(i + vec2(1.0, 0.0));
-      float c = random(i + vec2(0.0, 1.0));
-      float d = random(i + vec2(1.0, 1.0));
-      vec2 u = f * f * (3.0 - 2.0 * f);
-      return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-    }
-    float fbm(in vec2 _st) {
-      float v = 0.0;
-      float a = 0.5;
-      vec2  shift = vec2(100.0);
-      mat2  rot   = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
-      for (int i = 0; i < 5; ++i) {
-        v  += a * noise(_st);
-        _st = rot * _st * 2.0 + shift;
-        a  *= 0.5;
-      }
-      return v;
-    }
-    void main() {
-      vec2 st = gl_FragCoord.xy / u_res.xy;
-      st.x *= u_res.x / u_res.y;
-
-      vec2 q = vec2(0.);
-      q.x = fbm(st + 0.00 * u_time);
-      q.y = fbm(st + vec2(1.0));
-
-      vec2 r = vec2(0.);
-      r.x = fbm(st + 1.0 * q + vec2(1.7,  9.2) + 0.150 * u_time);
-      r.y = fbm(st + 1.0 * q + vec2(8.3,  2.8) + 0.126 * u_time);
-
-      vec3 dark1      = vec3(0.02, 0.05, 0.02);
-      vec3 dark2      = vec3(0.03, 0.08, 0.04);
-      vec3 darkAccent = vec3(0.05, 0.28, 0.10);
-      vec3 light1     = vec3(0.94, 0.98, 0.94);
-      vec3 light2     = vec3(0.88, 0.96, 0.89);
-      vec3 lightAccent= vec3(0.30, 0.75, 0.40);
-
-      vec3 c1      = mix(dark1,      light1,      u_theme);
-      vec3 c2      = mix(dark2,      light2,      u_theme);
-      vec3 cAccent = mix(darkAccent, lightAccent, u_theme);
-
-      vec3 color = mix(c1, c2, length(q));
-      color      = mix(color, cAccent, length(r) * 0.4);
-
-      gl_FragColor = vec4(color, 1.0);
-    }
-  `
-});
-
-const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
-scene.add(plane);
-
-function resize() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  renderer.setSize(w, h);
-  uniforms.u_res.value.set(w, h);
+    animateBg(0);
+  }
+} catch (e) {
+  console.warn("Three.js no disponible, fondo animado deshabilitado:", e);
 }
-window.addEventListener("resize", resize);
-resize();
-
-function animate(t) {
-  requestAnimationFrame(animate);
-  uniforms.u_time.value = t * 0.001;
-  renderer.render(scene, camera);
-}
-animate(0);
 
 /* ===== ANIMACIONES DE ENTRADA (GSAP) ===== */
-gsap.from(".login-brand", {
-  x: -50, opacity: 0, duration: 1.2, ease: "power4.out"
-});
-gsap.from(".login-card", {
-  y: 40, opacity: 0, duration: 1, delay: 0.2, ease: "power3.out"
-});
-gsap.from(".brand-feature", {
-  x: -20, opacity: 0, duration: 0.6, stagger: 0.12, delay: 0.5, ease: "power2.out"
-});
+if (typeof gsap !== "undefined") {
+  gsap.from(".login-brand", {
+    x: -50, opacity: 0, duration: 1.2, ease: "power4.out"
+  });
+  gsap.from(".login-card", {
+    y: 40, opacity: 0, duration: 1, delay: 0.2, ease: "power3.out"
+  });
+  gsap.from(".brand-feature", {
+    x: -20, opacity: 0, duration: 0.6, stagger: 0.12, delay: 0.5, ease: "power2.out"
+  });
+}
 
 /* ===== MOSTRAR / OCULTAR CONTRASEÑA ===== */
 const togglePassword = document.getElementById("togglePassword");
@@ -214,14 +224,20 @@ loginForm.addEventListener("submit", async (e) => {
   setLoading(true);
   ocultarAlerta();
 
+  // Timeout de 10 segundos: si el backend no responde, abortar el fetch
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), 10000);
+
   try {
     // ── Llamada al backend FastAPI ───────────────────────────────────
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method:      "POST",
       headers:     { "Content-Type": "application/json" },
       credentials: "include",
+      signal:      controller.signal,
       body:        JSON.stringify({ email, password })
     });
+    clearTimeout(timeoutId);
 
     // ── Error 429 — demasiados intentos (slowapi / bloqueo por IP) ──
     if (response.status === 429) {
@@ -242,17 +258,19 @@ loginForm.addEventListener("submit", async (e) => {
       sessionStorage.setItem("fs_nombre",   data.nombre);
       sessionStorage.setItem("fs_apellido", data.apellido);
 
-      // Animación de salida y redirección al index (dashboard futuro)
-      gsap.to(".login-card", {
-        y: -20,
-        opacity: 0,
-        duration: 0.4,
-        ease: "power2.in",
-        onComplete: () => {
-          // ⚠️ Cambia "/index.html" por "/dashboard" cuando tengas el dashboard
-          window.location.href = "index.html";
-        }
-      });
+      // Animación de salida y redirección al dashboard
+      const irAlDashboard = () => { window.location.href = "index.html"; };
+      if (typeof gsap !== "undefined") {
+        gsap.to(".login-card", {
+          y: -20,
+          opacity: 0,
+          duration: 0.4,
+          ease: "power2.in",
+          onComplete: irAlDashboard
+        });
+      } else {
+        irAlDashboard();
+      }
 
     } else {
       // ── Login fallido ─────────────────────────────────────────────
@@ -262,19 +280,26 @@ loginForm.addEventListener("submit", async (e) => {
       if (intentosFallidos >= MAX_INTENTOS) {
         mostrarAlerta("Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.");
       } else {
-        const msg = data.detail || "Credenciales incorrectas.";
+        const msg = mensajeError(data.detail) || "Credenciales incorrectas.";
         mostrarAlerta(`${msg} Te quedan ${restantes} intento${restantes !== 1 ? "s" : ""}.`);
       }
 
       // Animación de sacudida
-      gsap.fromTo(".login-card",
-        { x: -8 },
-        { x: 0, duration: 0.4, ease: "elastic.out(1, 0.3)" }
-      );
+      if (typeof gsap !== "undefined") {
+        gsap.fromTo(".login-card",
+          { x: -8 },
+          { x: 0, duration: 0.4, ease: "elastic.out(1, 0.3)" }
+        );
+      }
     }
 
   } catch (err) {
-    mostrarAlerta("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      mostrarAlerta("El servidor tardó demasiado en responder. Verifica que el backend esté corriendo.");
+    } else {
+      mostrarAlerta("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
+    }
     console.error("Error de red:", err);
 
   } finally {
@@ -283,6 +308,17 @@ loginForm.addEventListener("submit", async (e) => {
 });
 
 /* ===== UTILIDADES ===== */
+// FastAPI devuelve `detail` como string (401/429) o como lista de
+// errores de validación (422): se normaliza a un único texto legible.
+function mensajeError(detail) {
+  if (!detail) return "";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(e => (e.msg || "").replace(/^Value error, /, "")).filter(Boolean).join(" ");
+  }
+  return "";
+}
+
 function setLoading(estado) {
   btnLogin.disabled = estado;
   btnText.hidden    = estado;

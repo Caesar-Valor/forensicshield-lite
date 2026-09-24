@@ -121,9 +121,8 @@ btnScan.addEventListener("click", async () => {
       headers:     { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        target_ip:     ip,
-        target_nombre: ip,
-        modo:          modoActual
+        target_ip: ip,
+        modo:      modoActual
       })
     });
 
@@ -136,11 +135,11 @@ btnScan.addEventListener("click", async () => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.detail || "Error al iniciar el escaneo.");
+      throw new Error(mensajeError(data.detail) || "Error al iniciar el escaneo.");
     }
 
     escaneoActual = data.escaneo_id;
-    iniciarPolling(data.escaneo_id);
+    iniciarPolling(data.escaneo_id, modoActual);
 
   } catch (err) {
     finalizarUI();
@@ -149,15 +148,43 @@ btnScan.addEventListener("click", async () => {
 });
 
 /* ===== POLLING ===== */
-function iniciarPolling(escaneoId) {
+// Deben superar los --host-timeout de backend/scanner.py (120s / 900s)
+const POLLING_TIMEOUT_MS = {
+  rapido:   4  * 60 * 1000,
+  completo: 17 * 60 * 1000,
+};
+
+function iniciarPolling(escaneoId, modo) {
   if (pollingTimer) clearInterval(pollingTimer);
 
+  const pollingInicio = Date.now();
+  const timeoutMs     = POLLING_TIMEOUT_MS[modo] || POLLING_TIMEOUT_MS.rapido;
+
   pollingTimer = setInterval(async () => {
+    // Timeout de seguridad: si el escaneo no termina a tiempo, abortar
+    if (Date.now() - pollingInicio > timeoutMs) {
+      clearInterval(pollingTimer);
+      clearInterval(timerInterval);
+      finalizarUI();
+      mostrarAlerta("El escaneo tardo demasiado. Verifica que nmap este instalado y que la IP sea alcanzable.");
+      cEstado.textContent = "Timeout";
+      return;
+    }
+
     try {
       const response = await fetch(
         `${API_URL}/api/scanner/resultado/${escaneoId}`,
         { credentials: "include" }
       );
+
+      // Token expirado durante el escaneo
+      if (response.status === 401) {
+        clearInterval(pollingTimer);
+        clearInterval(timerInterval);
+        sessionStorage.clear();
+        window.location.href = "login.html";
+        return;
+      }
 
       if (!response.ok) return;
 
@@ -328,6 +355,16 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
 });
 
 /* ===== UTILIDADES SCANNER ===== */
+// FastAPI devuelve `detail` como string o como lista de errores de validación (422)
+function mensajeError(detail) {
+  if (!detail) return "";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(e => (e.msg || "").replace(/^Value error, /, "")).filter(Boolean).join(" ");
+  }
+  return "";
+}
+
 function mostrarAlerta(msg) {
   scanAlertMsg.textContent = msg;
   scanAlert.hidden         = false;
@@ -370,13 +407,18 @@ let modalMacActual = null;
 btnDiscover.addEventListener("click", async () => {
   btnDiscover.disabled = true;
   btnDiscover.classList.add("loading");
-  btnDiscoverText.textContent = "Escaneando...";
+  btnDiscoverText.textContent = "Escaneando red...";
   ocultarNetAlert();
+
+  const netController = new AbortController();
+  const netTimeout    = setTimeout(() => netController.abort(), 60000);
 
   try {
     const res = await fetch(`${API_URL}/api/network/hosts`, {
-      credentials: "include"
+      credentials: "include",
+      signal:      netController.signal
     });
+    clearTimeout(netTimeout);
 
     if (res.status === 401) {
       sessionStorage.clear();  // limpiar datos de UI
@@ -385,12 +427,17 @@ btnDiscover.addEventListener("click", async () => {
     }
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Error al escanear la red.");
+    if (!res.ok) throw new Error(mensajeError(data.detail) || "Error al escanear la red.");
 
     renderizarTablaRed(data.hosts, data.subred, data.ip_servidor);
 
   } catch (err) {
-    mostrarNetAlert(err.message || "No se pudo conectar al backend.");
+    clearTimeout(netTimeout);
+    if (err.name === "AbortError") {
+      mostrarNetAlert("El escaneo tardó demasiado. Intenta de nuevo.");
+    } else {
+      mostrarNetAlert(err.message || "No se pudo conectar al backend.");
+    }
   } finally {
     btnDiscover.disabled = false;
     btnDiscover.classList.remove("loading");
@@ -461,7 +508,10 @@ function renderizarTablaRed(hosts, subred, ipServidor) {
               Completo
             </button>
             <button class="btn-net-nombre"
-              onclick="abrirModal('${escHtml(h.ip)}','${escHtml(h.mac || '')}','${escHtml(h.nombre_personalizado || '')}')">
+              data-ip="${escHtml(h.ip)}"
+              data-mac="${escHtml(h.mac || "")}"
+              data-nombre="${escHtml(h.nombre_personalizado || "")}"
+              data-notas="${escHtml(h.notas || "")}">
               Nombrar
             </button>
             ${btnBloquear}
@@ -483,12 +533,20 @@ function seleccionarYEscanear(ip, modo) {
 }
 
 /* ===== MODAL NOMBRE ===== */
-function abrirModal(ip, mac, nombreActual) {
+// Los datos viajan en atributos data-* (no dentro de un onclick) para que
+// nombres o notas con comillas no rompan el HTML ni permitan inyectar JS.
+netTableBody.addEventListener("click", (e) => {
+  const btn = e.target.closest(".btn-net-nombre");
+  if (!btn) return;
+  abrirModal(btn.dataset.ip, btn.dataset.mac, btn.dataset.nombre, btn.dataset.notas);
+});
+
+function abrirModal(ip, mac, nombreActual, notasActuales) {
   modalIpActual            = ip;
   modalMacActual           = mac || null;
   modalIpLabel.textContent = `IP: ${ip}`;
   modalNombreInput.value   = nombreActual || "";
-  modalNotasInput.value    = "";
+  modalNotasInput.value    = notasActuales || "";
   modalNombre.hidden       = false;
   modalNombreInput.focus();
 }
@@ -534,7 +592,7 @@ modalGuardar.addEventListener("click", async () => {
     });
     const data = await res.json();
     if (res.ok) { modalNombre.hidden = true; btnDiscover.click(); }
-    else { alert("Error: " + (data.detail || "No se pudo guardar.")); }
+    else { alert("Error: " + (mensajeError(data.detail) || "No se pudo guardar.")); }
   } catch (err) {
     alert("Error de conexion al guardar el nombre.");
   } finally {
@@ -555,7 +613,7 @@ async function bloquearDispositivo(ip) {
     );
     const data = await res.json();
     if (res.ok) { alert(data.mensaje); }
-    else        { alert(data.detail || "No se pudo bloquear."); }
+    else        { alert(mensajeError(data.detail) || "No se pudo bloquear."); }
   } catch (err) {
     alert("Error de conexion.");
   }
@@ -646,7 +704,7 @@ async function ejecutarAcceso(url, confirmMsg) {
           : "Operacion exitosa.");
       mostrarAccessResult(msg, true);
     } else {
-      mostrarAccessResult(data.detail || "Error al procesar la solicitud.", false);
+      mostrarAccessResult(mensajeError(data.detail) || "Error al procesar la solicitud.", false);
     }
   } catch (err) {
     mostrarAccessResult("Error de conexion. ¿Esta uvicorn corriendo como administrador?", false);
@@ -959,7 +1017,7 @@ async function aplicarCorreccion(puerto, protocolo, btn) {
         if (card) card.classList.remove("rec-card-resuelta");
 
       } else {
-        alert(data.detail || "Error al revertir.");
+        alert(mensajeError(data.detail) || "Error al revertir.");
         btn.disabled = false;
         btn.innerHTML = "⚡ Aplicar Corrección";
       }
@@ -989,7 +1047,7 @@ async function aplicarCorreccion(puerto, protocolo, btn) {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.detail || "Error al aplicar corrección.");
+      alert(mensajeError(data.detail) || "Error al aplicar corrección.");
       btn.disabled  = false;
       btn.innerHTML = "⚡ Aplicar Corrección";
       return;
@@ -1090,7 +1148,6 @@ function iniciarVerificacion(puerto, protocolo) {
         credentials: "include",
         body: JSON.stringify({
           target_ip:      ipActual,
-          target_nombre:  ipActual,
           modo:           "rapido",
           puertos_custom: String(puerto)
         })
@@ -1116,11 +1173,17 @@ function iniciarVerificacion(puerto, protocolo) {
           return;
         }
 
-        const resResult = await fetch(
-          `${API_URL}/api/scanner/resultado/${idVerif}`,
-          { credentials: "include" }
-        );
-        const dataResult = await resResult.json();
+        let dataResult;
+        try {
+          const resResult = await fetch(
+            `${API_URL}/api/scanner/resultado/${idVerif}`,
+            { credentials: "include" }
+          );
+          if (!resResult.ok) return;
+          dataResult = await resResult.json();
+        } catch {
+          return;  // error de red puntual: se reintenta en el siguiente ciclo
+        }
 
         if (dataResult.estado === "completado") {
           clearInterval(poll);
@@ -1210,7 +1273,7 @@ btnGenerarPdf.addEventListener("click", async () => {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.detail || "Error al generar el reporte.");
+      alert(mensajeError(data.detail) || "Error al generar el reporte.");
       return;
     }
 

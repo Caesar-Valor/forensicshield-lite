@@ -103,3 +103,36 @@ def verificar_token(token: str) -> Optional[TokenData]:
 
     except JWTError:
         return None
+
+
+# =============================================
+# SESIÓN — JWT válido + sesión activa en BD
+# =============================================
+
+def verificar_sesion(token: str) -> Optional[TokenData]:
+    """
+    Además de validar firma y expiración del JWT, comprueba que la sesión
+    siga activa en `sesiones_activas`. Así un token deja de servir en
+    cuanto el usuario cierra sesión, aunque todavía no haya expirado.
+    """
+    token_data = verificar_token(token)
+    if not token_data:
+        return None
+
+    # Imports locales: evitan cargar la BD al importar solo utilidades JWT
+    import hashlib
+    from database import SessionLocal
+    from models   import SesionActiva
+
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    db = SessionLocal()
+    try:
+        activa = db.query(SesionActiva.id).filter(
+            SesionActiva.jwt_token_hash == token_hash,
+            SesionActiva.usuario_id     == token_data.usuario_id,
+            SesionActiva.activa         == True,
+        ).first()
+    finally:
+        db.close()
+
+    return token_data if activa else None
